@@ -1,0 +1,51 @@
+name: Update OI-Wiki PDF
+
+# 每天 UTC 1 点触发一次（你可以按需改成别的时间），并且支持手动触发
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  update_pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 签出仓库
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          # 让后续的 git push 生效
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. 获取最新 release 的下载 URL
+      - name: Get latest release asset URL
+        id: get_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const rel = await github.rest.repos.getLatestRelease({
+              owner: 'OI-wiki',
+              repo: 'OI-Wiki-export'
+            });
+            // 找到名叫 OI-wiki.pdf 的 asset
+            const asset = rel.data.assets.find(a => a.name === 'OI-wiki.pdf');
+            if (!asset) throw new Error('Cannot find OI-wiki.pdf in latest release');
+            core.setOutput('url', asset.browser_download_url);
+
+      # 3. 下载 PDF，覆盖仓库中的文件
+      - name: Download OI-wiki.pdf
+        run: |
+          curl -L "${{ steps.get_release.outputs.url }}" -o OI-wiki.pdf
+
+      # 4. 提交并推送改动
+      - name: Commit & Push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add OI-wiki.pdf
+          # 如果没有改动，这行会失败，但不会让整个 Job 崩溃
+          git diff --quiet && echo "No changes, skipping commit." || git commit -m "chore: update OI-wiki.pdf to latest release"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
