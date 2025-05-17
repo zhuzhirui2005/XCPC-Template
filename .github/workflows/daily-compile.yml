@@ -34,6 +34,9 @@ jobs:
               if [[ "$f" != "并查集.cpp" ]]; then
                 sed -i '1i#include "并查集.cpp"' "$f"
               fi
+              if [[ "$f" != "离散化.cpp" ]]; then
+                sed -i '1i#include "离散化.cpp"' "$f"
+              fi
               sed -i '1iusing namespace std;' "$f"
               sed -i '1i#include "Header.cpp"' "$f"
               sed -i '1i#include <bits/stdc++.h>' "$f"
