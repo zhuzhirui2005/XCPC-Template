@@ -1,7 +1,7 @@
 name: Update OI-Wiki PDF
 
-# 每天 UTC 1 点触发一次（你可以按需改成别的时间），并且支持手动触发
 on:
+  # 每天 UTC 1 点触发一次，也可使用 workflow_dispatch 手动触发
   schedule:
     - cron: '0 1 * * *'
   workflow_dispatch:
@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 签出仓库
-      - name: Checkout repo
+      # 1. 签出仓库并保留凭据以便后续 git push
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # 让后续的 git push 生效
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
-      # 2. 获取最新 release 的下载 URL
+      # 2. 获取最新 Release 中名为 OI-wiki.pdf 的下载链接
       - name: Get latest release asset URL
         id: get_release
         uses: actions/github-script@v6
@@ -28,24 +28,31 @@ jobs:
               owner: 'OI-wiki',
               repo: 'OI-Wiki-export'
             });
-            // 找到名叫 OI-wiki.pdf 的 asset
             const asset = rel.data.assets.find(a => a.name === 'OI-wiki.pdf');
             if (!asset) throw new Error('Cannot find OI-wiki.pdf in latest release');
             core.setOutput('url', asset.browser_download_url);
 
-      # 3. 下载 PDF，覆盖仓库中的文件
+      # 3. 下载最新的 OI-wiki.pdf
       - name: Download OI-wiki.pdf
         run: |
           curl -L "${{ steps.get_release.outputs.url }}" -o OI-wiki.pdf
 
-      # 4. 提交并推送改动
-      - name: Commit & Push
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add OI-wiki.pdf
-          # 如果没有改动，这行会失败，但不会让整个 Job 崩溃
-          git diff --quiet && echo "No changes, skipping commit." || git commit -m "chore: update OI-wiki.pdf to latest release"
-          git push
+      # 4. 如果有变化，提交并推送到远程
+      - name: Commit & Push if changed
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 配置提交作者
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # 暂存新下载的文件
+          git add OI-wiki.pdf
+
+          # 检测暂存区与 HEAD 是否有差异（包括新文件）
+          if git diff-index --quiet HEAD --; then
+            echo "No changes in OI-wiki.pdf, skipping commit."
+          else
+            git commit -m "chore: update OI-wiki.pdf to latest release"
+            git push
+          fi
