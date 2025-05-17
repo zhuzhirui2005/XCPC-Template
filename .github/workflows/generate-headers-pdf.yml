@@ -28,15 +28,16 @@ jobs:
             fonts-noto-cjk
 
       - name: Generate Markdown for headers
+        shell: bash
         run: |
-          cat << 'EOF' > HEADERS.md
----
-title: "C++ Header Files"
-toc: true
-toc-depth: 2
----
-EOF
+          # 用 echo 写入 YAML metadata block
+          echo '---'                > HEADERS.md
+          echo 'title: "C++ Header Files"' >> HEADERS.md
+          echo 'toc: true'          >> HEADERS.md
+          echo 'toc-depth: 2'       >> HEADERS.md
+          echo '---'                >> HEADERS.md
 
+          # 遍历 .hpp 文件，添加二级标题和代码块
           for file in *.hpp; do
             echo "## ${file}"      >> HEADERS.md
             echo '```cpp'          >> HEADERS.md
