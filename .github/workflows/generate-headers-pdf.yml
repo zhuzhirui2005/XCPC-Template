@@ -1,7 +1,6 @@
 name: Generate C++ Headers PDF
 
 on:
-  # 每天 UTC 2 点触发一次，也可手动运行
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
@@ -17,31 +16,43 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Install Pandoc and LaTeX
+      - name: Install Pandoc & LaTeX with CJK support
         run: |
           sudo apt-get update
-          sudo apt-get install -y pandoc texlive-xetex texlive-latex-recommended texlive-fonts-recommended
+          sudo apt-get install -y \
+            pandoc \
+            texlive-xetex \
+            texlive-latex-recommended \
+            texlive-fonts-recommended \
+            texlive-lang-chinese \
+            fonts-noto-cjk
 
       - name: Generate Markdown for headers
         run: |
+          # 顶部的 YAML metadata block 必须从最左侧开始，无缩进
           cat << 'EOF' > HEADERS.md
-          ---
-          title: "C++ Header Files"
-          toc: true
-          toc-depth: 2
-          ---
-          EOF
+---
+title: "C++ Header Files"
+toc: true
+toc-depth: 2
+---
+EOF
           for file in *.hpp; do
-            echo "## ${file}" >> HEADERS.md
-            echo '```cpp' >> HEADERS.md
+            echo "## ${file}"      >> HEADERS.md
+            echo '```cpp'          >> HEADERS.md
             sed 's/\t/    /g' "$file" >> HEADERS.md
-            echo '```' >> HEADERS.md
-            echo "" >> HEADERS.md
+            echo '```'             >> HEADERS.md
+            echo                   >> HEADERS.md
           done
 
-      - name: Convert Markdown to PDF
+      - name: Convert Markdown to PDF via XeLaTeX
         run: |
-          pandoc HEADERS.md --toc --toc-depth=2 -o headers.pdf
+          pandoc HEADERS.md \
+            --toc --toc-depth=2 \
+            --pdf-engine=xelatex \
+            -V CJKmainfont="Noto Serif CJK SC" \
+            -V geometry:margin=1in \
+            -o headers.pdf
 
       - name: Commit & Push if changed
         shell: bash
