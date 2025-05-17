@@ -64,9 +64,9 @@ struct subseq_table{
 	}
 };
 
-template<class T>
+template<class T,class container=unordered_map<T,int>>
 struct subseq_Table{
-	genUID<T>g;
+	genID<T,container>g;
 	V<V<int>>nxt;
 	inline subseq_Table(const V<T> &v){
 		int n=v.size();
