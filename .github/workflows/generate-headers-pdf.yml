@@ -30,25 +30,26 @@ jobs:
       - name: Generate Markdown for headers
         shell: bash
         run: |
-          # 顶格写 metadata，保证 UTF-8
-          printf '---\n'      > HEADERS.md
-          printf 'title: "C++ Header Files"\n' >> HEADERS.md
-          printf 'toc: true\n'                  >> HEADERS.md
-          printf 'toc-depth: 2\n'               >> HEADERS.md
-          printf 'header-includes:\n'           >> HEADERS.md
-          printf '  - \\usepackage{xeCJK}\n'     >> HEADERS.md
-          printf '---\n\n'                      >> HEADERS.md
+          cat <<'EOF' > HEADERS.md
+          ---
+          title: "C++ Header Files"
+          toc: true
+          toc-depth: 2
+          header-includes:
+            - \usepackage{xeCJK}
+          ---
 
-          # 清理可能的 Windows CRLF
+          EOF
+
           dos2unix HEADERS.md &>/dev/null
 
-          # 只处理 UTF-8 合法的 .hpp 文件
           for file in *.hpp; do
-            if printf '%s' "$file" | iconv -f utf-8 -t utf-8 >/dev/null 2>&1; then
-              printf '## %s\n\n' "$file"         >> HEADERS.md
-              printf '```cpp\n'                 >> HEADERS.md
-              sed 's/\t/    /g' "$file"         >> HEADERS.md
-              printf '\n```\n\n'                >> HEADERS.md
+            if iconv -f utf-8 -t utf-8 "$file" &>/dev/null; then
+              echo "## $file"              >> HEADERS.md
+              echo '```cpp'                >> HEADERS.md
+              sed 's/\t/    /g' "$file"    >> HEADERS.md
+              echo '```'                   >> HEADERS.md
+              echo ""                      >> HEADERS.md
             else
               echo "Skipping non-UTF8 filename: $file"
             fi
@@ -65,7 +66,6 @@ jobs:
             -o headers.pdf
 
       - name: Commit & Push if changed
-        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
