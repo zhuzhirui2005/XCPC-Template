@@ -174,7 +174,7 @@ inline V<mi> poly_conv_gcd(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j
     return a;
 }
 
-inline V<mi> poly_conv_lcm(const V<mi> &a,const V<mi> &b){ // c[k]=¡Æ(a[i]*b[j]) for lcm(i,j)=k not verified
+inline V<mi> poly_conv_lcm(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j]) for lcm(i,j)=k not verified
     assert(_a.size()&&_b.size());
     int n=max(_a.size(),_b.size());
     V<mi>a=_a,b=_b;
