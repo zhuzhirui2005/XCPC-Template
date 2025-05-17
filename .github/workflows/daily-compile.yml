@@ -20,17 +20,18 @@ jobs:
           # 1) 在 Header.cpp 开头插入 bits
           sed -i '1iusing namespace std;' Header.cpp
           sed -i '1i#include <bits/stdc++.h>' Header.cpp
+          sed -i '1i#pragma once' Header.cpp
 
           # 2) 对其它所有 .cpp 文件插入 bits 和 Header 和 modint
           for f in *.cpp; do
             if [[ "$f" != "Header.cpp" ]]; then
+              if [[ "$f" != "modint.cpp" ]]; then
+                sed -i '1i#include "modint.cpp"' "$f"
+              fi
               sed -i '1iusing namespace std;' "$f"
               sed -i '1i#include "Header.cpp"' "$f"
               sed -i '1i#include <bits/stdc++.h>' "$f"
-              if [[ "$f" == "modint.cpp" ]]; then
-                continue
-              fi
-              sed -i '1i#include "modint.cpp"' "$f"
+              sed -i '1i#pragma once' "$f"
             fi
           done
 
