@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: install dependencies
+      - name: Install Pandoc, LaTeX & utilities
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -26,24 +26,25 @@ jobs:
             texlive-fonts-recommended \
             texlive-lang-chinese \
             fonts-noto-cjk \
+            fonts-dejavu-core \
             dos2unix
 
-      - name: normalize and convert .hpp → UTF-8
+      - name: Normalize .hpp encoding → UTF-8
         shell: bash
         run: |
-          # 先去掉 Windows CRLF，再转换编码
           for f in *.hpp; do
+            # strip CRLF
             dos2unix "$f" &>/dev/null
-            # 尝试把 GBK 转 UTF-8（如果原本不是 GBK 会失败，忽略错误）
-            if iconv -f gb18030 -t utf-8 "$f" -o "${f}.utf8" 2>/dev/null; then
-              mv "${f}.utf8" "$f"
+            # if not valid UTF-8, try gb18030→UTF-8
+            if ! iconv -f utf-8 -t utf-8 "$f" -o /dev/null 2>/dev/null; then
+              iconv -f gb18030 -t utf-8 "$f" -o "${f}.utf8" && mv "${f}.utf8" "$f"
             fi
           done
 
-      - name: generate HEADERS.md
+      - name: Generate HEADERS.md
         shell: bash
         run: |
-          # 写入 YAML metadata
+          # write YAML front-matter
           printf '%s\n' \
             '---' \
             'title: "C++ Header Files"' \
@@ -51,10 +52,11 @@ jobs:
             'toc-depth: 2' \
             'header-includes:' \
             '  - \usepackage{xeCJK}' \
+            '  - \setCJKmonofont[Scale=MatchLowercase]{Noto Sans Mono CJK SC}' \
             '---' \
           > HEADERS.md
 
-          # 拼接每个 .hpp
+          # append each header
           for file in *.hpp; do
             printf '## %s\n' "$file"     >> HEADERS.md
             printf '```cpp\n'            >> HEADERS.md
@@ -62,17 +64,23 @@ jobs:
             printf '\n```\n\n'          >> HEADERS.md
           done
 
-      - name: convert to PDF
+      - name: Ensure HEADERS.md is UTF-8
+        shell: bash
+        run: |
+          iconv -f utf-8 -t utf-8 HEADERS.md -o HEADERS.tmp && mv HEADERS.tmp HEADERS.md
+
+      - name: Convert to PDF via XeLaTeX
         run: |
           pandoc HEADERS.md \
             --toc --toc-depth=2 \
             --pdf-engine=xelatex \
-            -V CJKmainfont="Noto Serif CJK SC" \
             -V mainfont="DejaVu Serif" \
+            -V monofont="DejaVu Sans Mono" \
+            -V CJKmainfont="Noto Serif CJK SC" \
             -V geometry:margin=1in \
             -o headers.pdf
 
-      - name: commit & push
+      - name: Commit & Push if changed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
