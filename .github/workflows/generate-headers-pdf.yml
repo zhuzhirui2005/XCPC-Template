@@ -30,20 +30,28 @@ jobs:
       - name: Generate Markdown for headers
         shell: bash
         run: |
-          # 用 echo 写入 YAML metadata block
-          echo '---'                > HEADERS.md
-          echo 'title: "C++ Header Files"' >> HEADERS.md
-          echo 'toc: true'          >> HEADERS.md
-          echo 'toc-depth: 2'       >> HEADERS.md
-          echo '---'                >> HEADERS.md
+          # 顶格写 metadata，保证 UTF-8
+          printf '---\n'      > HEADERS.md
+          printf 'title: "C++ Header Files"\n' >> HEADERS.md
+          printf 'toc: true\n'                  >> HEADERS.md
+          printf 'toc-depth: 2\n'               >> HEADERS.md
+          printf 'header-includes:\n'           >> HEADERS.md
+          printf '  - \\usepackage{xeCJK}\n'     >> HEADERS.md
+          printf '---\n\n'                      >> HEADERS.md
 
-          # 遍历 .hpp 文件，添加二级标题和代码块
+          # 清理可能的 Windows CRLF
+          dos2unix HEADERS.md &>/dev/null
+
+          # 只处理 UTF-8 合法的 .hpp 文件
           for file in *.hpp; do
-            echo "## ${file}"      >> HEADERS.md
-            echo '```cpp'          >> HEADERS.md
-            sed 's/\t/    /g' "$file" >> HEADERS.md
-            echo '```'             >> HEADERS.md
-            echo                   >> HEADERS.md
+            if printf '%s' "$file" | iconv -f utf-8 -t utf-8 >/dev/null 2>&1; then
+              printf '## %s\n\n' "$file"         >> HEADERS.md
+              printf '```cpp\n'                 >> HEADERS.md
+              sed 's/\t/    /g' "$file"         >> HEADERS.md
+              printf '\n```\n\n'                >> HEADERS.md
+            else
+              echo "Skipping non-UTF8 filename: $file"
+            fi
           done
 
       - name: Convert Markdown to PDF via XeLaTeX
@@ -52,6 +60,7 @@ jobs:
             --toc --toc-depth=2 \
             --pdf-engine=xelatex \
             -V CJKmainfont="Noto Serif CJK SC" \
+            -V mainfont="DejaVu Serif" \
             -V geometry:margin=1in \
             -o headers.pdf
 
