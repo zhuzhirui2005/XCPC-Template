@@ -103,28 +103,28 @@ struct SGTlazy{
         assert(0<=l),assert(l<=r),assert(r<n);
         add(1,0,n-1,l,r,v);
     }
-    int find_l(int p,int l,int r,int ql,int qr,const T &v){
-        if(l==r)return l;
-        push_down(p);
-        int mid=l+r>>1;
-        if(ql>mid||)return find_l(p<<1|1,mid+1,r,ql,qr,v);
-        return find_l(p<<1,l,mid,ql,qr,v);
-    }
-    inline int find_l(int l,int r,const T &v){
-        assert(0<=l),assert(l<=r),assert(r<n),assert(t[1]>=v);
-        return find_l(1,0,n-1,l,r,v);
-    }
-    int find_r(int p,int l,int r,int ql,int qr,const T &v){
-        if(l==r)return r;
-        push_down(p);
-        int mid=l+r>>1;
-        if(qr<=mid||)return find_r(p<<1,l,mid,ql,qr,v);
-        return find_r(p<<1|1,mid+1,r,ql,qr,v);
-    }
-    inline int find_r(int l,int r,const T &v){
-        assert(0<=l),assert(l<=r),assert(r<n),assert(t[1]>=v);
-        return find_r(1,0,n-1,l,r,v);
-    }
+    // int find_l(int p,int l,int r,int ql,int qr,const T &v){
+    //     if(l==r)return l;
+    //     push_down(p);
+    //     int mid=l+r>>1;
+    //     if(ql>mid||)return find_l(p<<1|1,mid+1,r,ql,qr,v);
+    //     return find_l(p<<1,l,mid,ql,qr,v);
+    // }
+    // inline int find_l(int l,int r,const T &v){
+    //     assert(0<=l),assert(l<=r),assert(r<n),assert(t[1]>=v);
+    //     return find_l(1,0,n-1,l,r,v);
+    // }
+    // int find_r(int p,int l,int r,int ql,int qr,const T &v){
+    //     if(l==r)return r;
+    //     push_down(p);
+    //     int mid=l+r>>1;
+    //     if(qr<=mid||)return find_r(p<<1,l,mid,ql,qr,v);
+    //     return find_r(p<<1|1,mid+1,r,ql,qr,v);
+    // }
+    // inline int find_r(int l,int r,const T &v){
+    //     assert(0<=l),assert(l<=r),assert(r<n),assert(t[1]>=v);
+    //     return find_r(1,0,n-1,l,r,v);
+    // }
 };
 
 template<class T>
