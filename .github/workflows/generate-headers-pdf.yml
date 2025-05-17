@@ -8,14 +8,15 @@ on:
 jobs:
   build_pdf:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: checkout
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Install Pandoc, LaTeX & dos2unix
+      - name: install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -27,7 +28,19 @@ jobs:
             fonts-noto-cjk \
             dos2unix
 
-      - name: Generate Markdown for headers
+      - name: normalize and convert .hpp → UTF-8
+        shell: bash
+        run: |
+          # 先去掉 Windows CRLF，再转换编码
+          for f in *.hpp; do
+            dos2unix "$f" &>/dev/null
+            # 尝试把 GBK 转 UTF-8（如果原本不是 GBK 会失败，忽略错误）
+            if iconv -f gb18030 -t utf-8 "$f" -o "${f}.utf8" 2>/dev/null; then
+              mv "${f}.utf8" "$f"
+            fi
+          done
+
+      - name: generate HEADERS.md
         shell: bash
         run: |
           # 写入 YAML metadata
@@ -41,22 +54,15 @@ jobs:
             '---' \
           > HEADERS.md
 
-          # 转为 Unix 换行
-          dos2unix HEADERS.md &>/dev/null
-
-          # 遍历 .hpp
+          # 拼接每个 .hpp
           for file in *.hpp; do
-            if iconv -f utf-8 -t utf-8 "$file" &>/dev/null; then
-              printf '## %s\n' "$file"     >> HEADERS.md
-              printf '```cpp\n'            >> HEADERS.md
-              sed 's/\t/    /g' "$file"    >> HEADERS.md
-              printf '\n```\n\n'          >> HEADERS.md
-            else
-              echo "Skipping non-UTF8 filename: $file"
-            fi
+            printf '## %s\n' "$file"     >> HEADERS.md
+            printf '```cpp\n'            >> HEADERS.md
+            sed 's/\t/    /g' "$file"    >> HEADERS.md
+            printf '\n```\n\n'          >> HEADERS.md
           done
 
-      - name: Convert Markdown to PDF
+      - name: convert to PDF
         run: |
           pandoc HEADERS.md \
             --toc --toc-depth=2 \
@@ -66,7 +72,7 @@ jobs:
             -V geometry:margin=1in \
             -o headers.pdf
 
-      - name: Commit & Push if changed
+      - name: commit & push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
