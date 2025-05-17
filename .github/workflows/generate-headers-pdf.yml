@@ -8,7 +8,6 @@ on:
 jobs:
   build_pdf:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,7 +15,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Install Pandoc & LaTeX with CJK support
+      - name: Install Pandoc, LaTeX & dos2unix
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -25,12 +24,13 @@ jobs:
             texlive-latex-recommended \
             texlive-fonts-recommended \
             texlive-lang-chinese \
-            fonts-noto-cjk
+            fonts-noto-cjk \
+            dos2unix
 
       - name: Generate Markdown for headers
         shell: bash
         run: |
-          # write YAML metadata
+          # 写入 YAML metadata
           printf '%s\n' \
             '---' \
             'title: "C++ Header Files"' \
@@ -41,8 +41,10 @@ jobs:
             '---' \
           > HEADERS.md
 
+          # 转为 Unix 换行
           dos2unix HEADERS.md &>/dev/null
 
+          # 遍历 .hpp
           for file in *.hpp; do
             if iconv -f utf-8 -t utf-8 "$file" &>/dev/null; then
               printf '## %s\n' "$file"     >> HEADERS.md
@@ -54,7 +56,7 @@ jobs:
             fi
           done
 
-      - name: Convert Markdown to PDF via XeLaTeX
+      - name: Convert Markdown to PDF
         run: |
           pandoc HEADERS.md \
             --toc --toc-depth=2 \
