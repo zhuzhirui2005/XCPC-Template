@@ -29,7 +29,6 @@ jobs:
 
       - name: Generate Markdown for headers
         run: |
-          # 顶部的 YAML metadata block 必须从最左侧开始，无缩进
           cat << 'EOF' > HEADERS.md
 ---
 title: "C++ Header Files"
@@ -37,6 +36,7 @@ toc: true
 toc-depth: 2
 ---
 EOF
+
           for file in *.hpp; do
             echo "## ${file}"      >> HEADERS.md
             echo '```cpp'          >> HEADERS.md
