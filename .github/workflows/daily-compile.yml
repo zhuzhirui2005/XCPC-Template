@@ -41,7 +41,7 @@ jobs:
           # 3) 尝试编译每个文件（若有工程文件可以改成编译整个工程）
           for f in *.cpp; do
             echo "Compiling $f..."
-            g++ -std=c++17 -O2 -Wall -Wextra -fsyntax-only "$f"
+            g++ -std=c++17 -O2 -Wall -Wextra -Wno-pragmas -fsyntax-only "$f"
           done
 
       - name: Revert all local modifications

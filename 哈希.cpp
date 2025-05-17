@@ -79,6 +79,11 @@ struct dmhsh{
 
 mt19937 rnd(time(0));
 inline int genPri(int l,int r){
+    auto isp=[&](int k){
+        if(k<2)return false;
+        for(int i=2;i*i<=k;++i)if(k%i==0)return false;
+        return true;
+    };
     int p=uniform_int_distribution<int>(l,r)(rnd);
     while(!isp(p))++p;
     return p;
