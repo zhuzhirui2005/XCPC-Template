@@ -30,26 +30,25 @@ jobs:
       - name: Generate Markdown for headers
         shell: bash
         run: |
-          cat <<'EOF' > HEADERS.md
-          ---
-          title: "C++ Header Files"
-          toc: true
-          toc-depth: 2
-          header-includes:
-            - \usepackage{xeCJK}
-          ---
-
-          EOF
+          # write YAML metadata
+          printf '%s\n' \
+            '---' \
+            'title: "C++ Header Files"' \
+            'toc: true' \
+            'toc-depth: 2' \
+            'header-includes:' \
+            '  - \usepackage{xeCJK}' \
+            '---' \
+          > HEADERS.md
 
           dos2unix HEADERS.md &>/dev/null
 
           for file in *.hpp; do
             if iconv -f utf-8 -t utf-8 "$file" &>/dev/null; then
-              echo "## $file"              >> HEADERS.md
-              echo '```cpp'                >> HEADERS.md
+              printf '## %s\n' "$file"     >> HEADERS.md
+              printf '```cpp\n'            >> HEADERS.md
               sed 's/\t/    /g' "$file"    >> HEADERS.md
-              echo '```'                   >> HEADERS.md
-              echo ""                      >> HEADERS.md
+              printf '\n```\n\n'          >> HEADERS.md
             else
               echo "Skipping non-UTF8 filename: $file"
             fi
