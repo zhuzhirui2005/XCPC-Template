@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Install Pandoc, LaTeX & utilities
+      - name: Install Pandoc, LaTeX & fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -29,13 +29,11 @@ jobs:
             fonts-dejavu-core \
             dos2unix
 
-      - name: Normalize .hpp encoding → UTF-8
+      - name: Normalize & convert headers to UTF-8
         shell: bash
         run: |
           for f in *.hpp; do
-            # strip CRLF
             dos2unix "$f" &>/dev/null
-            # if not valid UTF-8, try gb18030→UTF-8
             if ! iconv -f utf-8 -t utf-8 "$f" -o /dev/null 2>/dev/null; then
               iconv -f gb18030 -t utf-8 "$f" -o "${f}.utf8" && mv "${f}.utf8" "$f"
             fi
@@ -44,7 +42,6 @@ jobs:
       - name: Generate HEADERS.md
         shell: bash
         run: |
-          # write YAML front-matter
           printf '%s\n' \
             '---' \
             'title: "C++ Header Files"' \
@@ -53,10 +50,11 @@ jobs:
             'header-includes:' \
             '  - \usepackage{xeCJK}' \
             '  - \setCJKmonofont[Scale=MatchLowercase]{Noto Sans Mono CJK SC}' \
+            '  - \usepackage{fvextra}' \
+            '  - \fvset{breaklines=true,breakanywhere=true,breakindent=0pt}' \
             '---' \
           > HEADERS.md
 
-          # append each header
           for file in *.hpp; do
             printf '## %s\n' "$file"     >> HEADERS.md
             printf '```cpp\n'            >> HEADERS.md
