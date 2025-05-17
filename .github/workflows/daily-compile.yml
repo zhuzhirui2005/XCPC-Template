@@ -27,6 +27,9 @@ jobs:
               sed -i '1iusing namespace std;' "$f"
               sed -i '1i#include "Header.cpp"' "$f"
               sed -i '1i#include <bits/stdc++.h>' "$f"
+              if [[ "$f" == "modint.cpp" ]]; then
+                continue
+              fi
               sed -i '1i#include "modint.cpp"' "$f"
             fi
           done
