@@ -240,7 +240,7 @@ T du_sieve(T n,const V<T> &pre_f,const function<T(T)> &pre_g,const function<T(T)
 			i=j,pre=cur;
 		}
 	}
-	reurn x;
+	return x;
 }
 
 struct vote_1{
