@@ -1,0 +1,40 @@
+name: Daily C++ Compile Check
+
+on:
+  schedule:
+    # 每天 UTC 0 点触发一次，按需改成你想要的时间
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Inject headers and namespace, then compile
+        shell: bash
+        run: |
+          # 1) 在 Header.cpp 开头插入
+          sed -i '1iusing namespace std;' Header.cpp
+          sed -i '1i#include <bits/stdc++.h>' Header.cpp
+
+          # 2) 对其它所有 .cpp 文件插入 bits 和 Header
+          for f in *.cpp; do
+            if [[ "$f" != "Header.cpp" ]]; then
+              sed -i '1iusing namespace std;' "$f"
+              sed -i '1i#include "Header.cpp"' "$f"
+              sed -i '1i#include <bits/stdc++.h>' "$f"
+            fi
+          done
+
+          # 3) 尝试编译每个文件（若有工程文件可以改成编译整个工程）
+          for f in *.cpp; do
+            echo "Compiling $f..."
+            g++ -std=c++17 -O2 -Wall -Wextra -fsyntax-only "$f"
+          done
+
+      - name: Revert all local modifications
+        run: git checkout -- .
