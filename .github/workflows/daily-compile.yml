@@ -17,35 +17,35 @@ jobs:
       - name: Inject headers and namespace, then compile
         shell: bash
         run: |
-          # 1) 在 Header.cpp 开头插入依赖
-          sed -i '1iusing namespace std;' Header.cpp
-          sed -i '1i#include <bits/stdc++.h>' Header.cpp
-          sed -i '1i#pragma once' Header.cpp
+          # 1) 在 Header.hpp 开头插入依赖
+          sed -i '1iusing namespace std;' Header.hpp
+          sed -i '1i#include <bits/stdc++.h>' Header.hpp
+          sed -i '1i#pragma once' Header.hpp
 
-          # 2) 对其它所有 .cpp 文件插入依赖
-          for f in *.cpp; do
-            if [[ "$f" != "Header.cpp" ]]; then
-              if [[ "$f" != "modint.cpp" ]]; then
-                sed -i '1i#include "modint.cpp"' "$f"
+          # 2) 对其它所有 .hpp 文件插入依赖
+          for f in *.hpp; do
+            if [[ "$f" != "Header.hpp" ]]; then
+              if [[ "$f" != "modint.hpp" ]]; then
+                sed -i '1i#include "modint.hpp"' "$f"
               fi
-              if [[ "$f" != "树状数组.cpp" ]]; then
-                sed -i '1i#include "树状数组.cpp"' "$f"
+              if [[ "$f" != "树状数组.hpp" ]]; then
+                sed -i '1i#include "树状数组.hpp"' "$f"
               fi
-              if [[ "$f" != "并查集.cpp" ]]; then
-                sed -i '1i#include "并查集.cpp"' "$f"
+              if [[ "$f" != "并查集.hpp" ]]; then
+                sed -i '1i#include "并查集.hpp"' "$f"
               fi
-              if [[ "$f" != "离散化.cpp" ]]; then
-                sed -i '1i#include "离散化.cpp"' "$f"
+              if [[ "$f" != "离散化.hpp" ]]; then
+                sed -i '1i#include "离散化.hpp"' "$f"
               fi
               sed -i '1iusing namespace std;' "$f"
-              sed -i '1i#include "Header.cpp"' "$f"
+              sed -i '1i#include "Header.hpp"' "$f"
               sed -i '1i#include <bits/stdc++.h>' "$f"
               sed -i '1i#pragma once' "$f"
             fi
           done
 
           # 3) 尝试编译每个文件（若有工程文件可以改成编译整个工程）
-          for f in *.cpp; do
+          for f in *.hpp; do
             echo "Compiling $f..."
             g++ -std=c++17 -O2 -Wall -Wextra -fsyntax-only "$f"
           done
