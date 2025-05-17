@@ -1,3 +1,4 @@
+const double eps=1e-8;
 struct vec2D{
     double x,y;
     inline vec2D(double x_=0,double y_=0):x(x_),y(y_){}
