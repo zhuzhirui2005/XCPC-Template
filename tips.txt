@@ -1,0 +1,15 @@
+x 个球的箱子，y 个红球，每次随机取一个，不放回，将红球全取出来的期望次数是 x-(x-y)/(y+1)
+
+矩形离散化：https://leetcode.cn/submissions/detail/444302863/
+
+整体二分离散化：https://www.luogu.com.cn/record/116111969
+
+树上最大路径和：https://leetcode.cn/submissions/detail/395367510/
+
+树链剖分对边求max：https://codeforces.com/contest/1805/submission/217554972
+
+数位dp模板：https://leetcode.cn/submissions/detail/458321420/
+
+基环树计数O(n)：https://iai.sh.cn/submission/806227
+
+Gosper's Hack: https://www.luogu.com.cn/record/132893887
