@@ -1,10 +1,10 @@
+#include"Header.cpp"
+
 template<class T>
 struct matrix{
 	int n,m;
 	V<V<T>>a;
-	inline matrix(int _n=0,int _m=0,T v=T()):n(_n),m(_m){
-		V<V<T>>(n,V<T>(m,v)).swap(a);
-	};
+	inline matrix(int n=0,int m=0,T v=T()):n(n),m(m),a(n,V<T>(m,v)){}
 	inline V<T> &operator[](int idx){return a[idx];}
 	inline const V<T> &operator[](int idx)const{return a[idx];}
 	inline matrix operator*(const matrix &rhs){
@@ -56,7 +56,7 @@ struct dis_matrix{
 	int n,m;
 	V<V<T>>a;
 	inline dis_matrix(int _n=0,int _m=0,T v=T()):n(_n),m(_m){
-		assert((is_same<T,int>::value)||(is_same<T,ll>::value)||(is_same<T,ull>::value));
+		assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));
 		V<V<T>>(n,V<T>(m)).swap(a);
 	};
 	inline V<T> &operator[](int idx){return a[idx];}
