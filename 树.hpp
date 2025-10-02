@@ -124,7 +124,7 @@ struct tree_chain{
         }
         return rev[seg[p]-k];
     }
-	inline V<pii> path(int x,int y,bool dir=0){
+	inline V<pii> path(int x,int y,bool dir=0,bool lca=1){
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n);
 		V<pii>ret,ter;
 		bool rv=0;
@@ -137,12 +137,14 @@ struct tree_chain{
 			else (rv?ter:ret).eb(seg[top[x]],seg[x]);
 			x=fa[top[x]];
 		}
-		if(dep[x]>dep[y])rv^=1,swap(x,y);
-		if(dir){
-			if(rv)ter.eb(seg[y],seg[x]);
-			else ret.eb(seg[x],seg[y]);
-		}
-		else (rv?ret:ter).eb(seg[x],seg[y]);
+        if(lca||x!=y){
+            if(dep[x]>dep[y])rv^=1,swap(x,y);
+            if(dir){
+                if(rv)ter.eb(seg[y],seg[x]+!lca);
+                else ret.eb(seg[x]+!lca,seg[y]);
+            }
+            else (rv?ret:ter).eb(seg[x]+!lca,seg[y]);
+        }
 		reverse(ALL(ter));
 		ret.insert(ret.end(),ALL(ter));
 		return ret;
