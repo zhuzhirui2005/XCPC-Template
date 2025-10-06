@@ -150,6 +150,24 @@ struct tree_chain{
 		return ret;
 	}
 };
+inline void virt_tree(V<int> &p,const tree_chain &tc,V<V<int>> &to){
+    sort(ALL(p),[&](int x,int y){return tc.seg[x]<tc.seg[y];});
+    p.erase(unique(ALL(p)),p.end());
+    auto add_edge=[&](int x,int y){to[x].pb(y),to[y].pb(x);};
+    V<int>st;
+    for(int i:p){
+        if(st.size()){
+            int anc=tc.lca(i,st.back());
+            if(anc!=st.back()){
+                while(st.size()>1&&tc.seg[anc]<tc.seg[st[st.size()-2]])add_edge(st[st.size()-2],st.back()),st.qb();
+                if(st.size()==1||tc.seg[anc]>tc.seg[st[st.size()-2]])V<int>().swap(to[anc]),add_edge(anc,st.back()),st.back()=anc;
+                else add_edge(anc,st.back()),st.qb();
+            }
+        }
+        V<int>().swap(to[i]),st.pb(i);
+    }
+    while(st.size()>1)add_edge(st[st.size()-2],st.back()),st.qb();
+}
 
 struct lca_table_multi{
 	int n;
