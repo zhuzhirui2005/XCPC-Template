@@ -57,7 +57,7 @@ struct dis_matrix{
 	V<V<T>>a;
 	inline dis_matrix(int _n=0,int _m=0,T v=T()):n(_n),m(_m){
 		assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));
-		V<V<T>>(n,V<T>(m)).swap(a);
+		V<V<T>>(n,V<T>(m,v)).swap(a);
 	};
 	inline V<T> &operator[](int idx){return a[idx];}
 	inline const V<T> &operator[](int idx)const{return a[idx];}
@@ -69,6 +69,11 @@ struct dis_matrix{
 	}
 	inline dis_matrix pow(ull k){
 		dis_matrix base=*this,ret(n,n,is_same<T,int>::value?inf:infl);
+		for(;k;k>>=1,base=base*base)if(k&1)ret=ret*base;
+		return ret;
+	}
+    inline dis_matrix mul_pow(const dis_matrix &rhs,ull k){
+		dis_matrix base=rhs,ret=*this; 
 		for(;k;k>>=1,base=base*base)if(k&1)ret=ret*base;
 		return ret;
 	}
