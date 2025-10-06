@@ -11,7 +11,8 @@ struct vec2D{
     inline bool coln(const vec2D &rhs){return fabs(cross(rhs))<eps;}
     inline int dir(const vec2D &rhs){return !coln(rhs)?cross(rhs)>=eps?1:-1:0;}
     inline double norm(){return sqrt(x*x+y*y);}
-    inline double proj(const vec2D &rhs){return 1.*(*this*rhs)/(*this**this);}
+    inline double projcoef(const vec2D &rhs){return (*this*rhs)/(*this**this);}
+    inline double projlen(const vec2D &rhs){return (*this*rhs)/norm();}
     inline vec2D rot(double theta){
         double c=cos(theta),s=sin(theta);
         return {x*c+y*s,y*c-x*s};
@@ -37,8 +38,9 @@ struct vec2d{
     inline bool coln(const vec2d &rhs){return !cross(rhs);}
     inline int dir(const vec2d &rhs){return cross(rhs)?cross(rhs)>0?1:-1:0;}
     inline double norm(){return sqrt(x*x+y*y);}
-    inline double proj(const vec2d &rhs){return 1.*(*this*rhs)/(*this**this);}
-    inline vec2D rot(double theta){
+    inline double projcoef(const vec2d &rhs){return 1.*(*this*rhs)/(*this**this);}
+    inline double projlen(const vec2d &rhs){return (*this*rhs)/norm();}
+    inline vec2D rot(double theta){ // note that the result used double
         double c=cos(theta),s=sin(theta);
         return {x*c+y*s,y*c-x*s};
     }
@@ -49,4 +51,16 @@ struct vec2d{
         if(x>=0&&y<0)return 4;
         return 0;
     }
+};
+
+struct vec3D{
+    double x,y,z;
+    inline vec3D(double x_=0.,double y_=0.,double z_=0.):x(x_),y(y_),z(z_){}
+    inline vec3D operator+(const vec3D &rhs){return {x+rhs.x,y+rhs.y,z+rhs.z};}
+    inline vec3D operator-(const vec3D &rhs){return {x-rhs.x,y-rhs.y,z-rhs.z};}
+    inline vec3D cross(const vec3D &rhs){return {y*rhs.z-z*rhs.y,z*rhs.x-x*rhs.z,x*rhs.y-y*rhs.x};}
+    inline double operator*(const vec3D &rhs){return x*rhs.x+y*rhs.y+z*rhs.z;}
+    inline double norm(){return sqrt(x*x+y*y+z*z);}
+    inline double projcoef(const vec3D &rhs){return (*this*rhs)/(*this**this);}
+    inline double projlen(const vec3D &rhs){return (*this*rhs)/norm();}
 };
