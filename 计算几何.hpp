@@ -11,16 +11,16 @@ struct vec2D{
     inline double operator*(const vec2D &rhs){return dot(rhs);}
     inline bool operator==(const vec2D &rhs){return max(fabs(x-rhs.x),fabs(y-rhs.y))<eps;}
     // unsafe since overflow, use !cross() instead
-    // inline bool coln(const vec2D &rhs){return (*this*rhs)*(*this*rhs)==(*this**this)*(rhs*rhs);}
-    inline bool coln(const vec2D &rhs){return fabs(cross(rhs))<eps;}
-    inline int dir(const vec2D &rhs)const{return cross(rhs)?cross(rhs)>=eps?1:-1:0;} // 1 if rhs is on ccw
+    // inline bool coln(const vec2D &rhs){return dot(rhs)*dot(rhs)==dot(*this)*(rhs*rhs);}
+    inline bool coln(const vec2D &rhs)const{return fabs(cross(rhs))<eps;}
+    inline int dir(const vec2D &rhs)const{return !coln(rhs)?cross(rhs)>=eps?1:-1:0;} // 1 if rhs is on ccw
     inline double dist(const vec2D &rhs){
         double dx=x-rhs.x,dy=y-rhs.y;
         return sqrt(dx*dx+dy*dy);
     }
     inline double norm(){return sqrt(x*x+y*y);}
-    inline double projcoef(const vec2D &rhs){return (*this*rhs)/(*this**this);}
-    inline double projlen(const vec2D &rhs){return (*this*rhs)/norm();}
+    inline double projcoef(const vec2D &rhs){return dot(rhs)/dot(*this);}
+    inline double projlen(const vec2D &rhs){return dot(rhs)/norm();}
     inline vec2D rot(double theta){ // ccw
         double c=cos(theta),s=sin(theta);
         return {x*c-y*s,y*c+x*s};
@@ -29,7 +29,7 @@ struct vec2D{
         return atan2(y,x);
     }
     inline double ang(const vec2D &rhs){ // ccw rot
-        double ret=atan2(cross(rhs),(*this)*rhs);
+        double ret=atan2(cross(rhs),dot(rhs));
         if(ret<0)ret+=2*PI;
         return ret;
     }
@@ -53,7 +53,7 @@ struct vec2d{
     inline ll operator*(const vec2d &rhs){return dot(rhs);}
     inline bool operator==(const vec2d &rhs){return x==rhs.x&&y==rhs.y;}
     // unsafe since overflow, use !cross() instead
-    // inline bool coln(const vec2d &rhs){return (*this*rhs)*(*this*rhs)==(*this**this)*(rhs*rhs);}
+    // inline bool coln(const vec2D &rhs){return dot(rhs)*dot(rhs)==dot(*this)*(rhs*rhs);}
     inline bool coln(const vec2d &rhs){return !cross(rhs);}
     inline int dir(const vec2d &rhs)const{return cross(rhs)?cross(rhs)>0?1:-1:0;} // 1 if rhs is on ccw
     inline double dist(const vec2d &rhs){
@@ -61,8 +61,8 @@ struct vec2d{
         return sqrt(dx*dx+dy*dy);
     }
     inline double norm(){return sqrt(x*x+y*y);}
-    inline double projcoef(const vec2d &rhs){return 1.*(*this*rhs)/(*this**this);}
-    inline double projlen(const vec2d &rhs){return (*this*rhs)/norm();}
+    inline double projcoef(const vec2d &rhs){return 1.*dot(rhs)/dot(*this);}
+    inline double projlen(const vec2d &rhs){return dot(rhs)/norm();}
     inline vec2D rot(double theta){ // ccw, note that the result used double
         double c=cos(theta),s=sin(theta);
         return {x*c-y*s,y*c+x*s};
@@ -71,7 +71,7 @@ struct vec2d{
         return atan2(y,x);
     }
     inline double ang(const vec2d &rhs){ // ccw rot
-        double ret=atan2(cross(rhs),(*this)*rhs);
+        double ret=atan2(cross(rhs),dot(rhs));
         if(ret<0)ret+=2*PI;
         return ret;
     }
@@ -97,7 +97,7 @@ inline void angle_sort(V<vec> &v){
     sort(ALL(v),[&](const vec &x,const vec &y){
         return x.quad()!=y.quad()?
                x.quad()<y.quad():
-               x.dir(y)==1;
+               x.dir(y)==1; // eps may break sort, use atan2 instead
     });
 }
 
@@ -118,7 +118,7 @@ struct convex{
                 // (b-a).cross(c-a)
                 return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
             };
-            ll c=cross(v[v.size()-2],v.back(),k);
+            auto c=cross(v[v.size()-2],v.back(),k);
             return coln?c<0:c<=0;
         };
         For(i,p.size()){
@@ -182,8 +182,9 @@ struct vec3D{
     inline vec3D operator+(const vec3D &rhs){return {x+rhs.x,y+rhs.y,z+rhs.z};}
     inline vec3D operator-(const vec3D &rhs){return {x-rhs.x,y-rhs.y,z-rhs.z};}
     inline vec3D cross(const vec3D &rhs){return {y*rhs.z-z*rhs.y,z*rhs.x-x*rhs.z,x*rhs.y-y*rhs.x};}
-    inline double operator*(const vec3D &rhs){return x*rhs.x+y*rhs.y+z*rhs.z;}
+    inline double dot(const vec3D &rhs){return x*rhs.x+y*rhs.y+z*rhs.z;}
+    inline double operator*(const vec3D &rhs){return dot(rhs);}
     inline double norm(){return sqrt(x*x+y*y+z*z);}
-    inline double projcoef(const vec3D &rhs){return (*this*rhs)/(*this**this);}
-    inline double projlen(const vec3D &rhs){return (*this*rhs)/norm();}
+    inline double projcoef(const vec3D &rhs){return dot(rhs)/dot(*this);}
+    inline double projlen(const vec3D &rhs){return dot(rhs)/norm();}
 };
