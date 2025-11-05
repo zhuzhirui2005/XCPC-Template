@@ -1,8 +1,10 @@
 name: Generate C++ Headers PDF
 
 on:
-  schedule:
-    - cron: '0 2 * * *'
+  push:
+    paths:
+      - "*.hpp"
+      - ".github/workflows/generate-headers-pdf.yml"
   workflow_dispatch:
 
 jobs:
