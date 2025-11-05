@@ -18,30 +18,29 @@ jobs:
         shell: bash
         run: |
           # 1) 在 Header.hpp 开头插入依赖
-          sed -i '1iusing namespace std;' Header.hpp
-          sed -i '1i#include <bits/stdc++.h>' Header.hpp
-          sed -i '1i#pragma once' Header.hpp
+          header_prefix=$'#pragma once\n#include <bits/stdc++.h>\nusing namespace std;\n'
+          tmp=$(mktemp)
+          printf '%b' "$header_prefix" > "$tmp"
+          cat Header.hpp >> "$tmp"
+          mv "$tmp" Header.hpp
 
           # 2) 对其它所有 .hpp 文件插入依赖
-          for f in *.hpp; do
-            if [[ "$f" != "Header.hpp" ]]; then
-              if [[ "$f" != "modint.hpp" ]]; then
-                sed -i '1i#include "modint.hpp"' "$f"
-              fi
-              if [[ "$f" != "树状数组.hpp" ]]; then
-                sed -i '1i#include "树状数组.hpp"' "$f"
-              fi
-              if [[ "$f" != "并查集.hpp" ]]; then
-                sed -i '1i#include "并查集.hpp"' "$f"
-              fi
-              if [[ "$f" != "离散化.hpp" ]]; then
-                sed -i '1i#include "离散化.hpp"' "$f"
-              fi
-              sed -i '1iusing namespace std;' "$f"
-              sed -i '1i#include "Header.hpp"' "$f"
-              sed -i '1i#include <bits/stdc++.h>' "$f"
-              sed -i '1i#pragma once' "$f"
-            fi
+          common_prefix=$'#pragma once\n#include <bits/stdc++.h>\n#include "Header.hpp"\nusing namespace std;\n'
+          readarray -t headers < <(printf '%s\n' *.hpp)
+
+          for f in "${headers[@]}"; do
+            [[ "$f" == "Header.hpp" ]] && continue
+
+            prefix="$common_prefix"
+            for dep in "${headers[@]}"; do
+              [[ "$dep" == "Header.hpp" || "$dep" == "$f" ]] && continue
+              prefix+="#include \"$dep\"\n"
+            done
+
+            tmp=$(mktemp)
+            printf '%b' "$prefix" > "$tmp"
+            cat "$f" >> "$tmp"
+            mv "$tmp" "$f"
           done
 
           # 3) 尝试编译每个文件（若有工程文件可以改成编译整个工程）
