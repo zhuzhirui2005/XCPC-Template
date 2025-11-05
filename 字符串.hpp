@@ -162,3 +162,40 @@ inline V<int> get_ext(const V<int> &z,const string &s,const string &t){
     }
     return ext;
 }
+
+inline tuple<V<int>,V<int>> suffix_array(const string &s,int m=128){
+    int n=s.size();
+    V<int>cnt(m),id(n),rk(n),sa(n),tmp(n);
+    For(i,n)++cnt[rk[i]=s[i]];
+    FOR(i,1,m)cnt[i]+=cnt[i-1];
+    Rep(i,n)sa[--cnt[rk[i]]]=i;
+    for(int p=0,w=1;p+1<n;m=p+1,w<<=1){
+        id.clear();
+        FOR(i,n-w,n)id.pb(i);
+        For(i,n)if(sa[i]>=w)id.pb(sa[i]-w);
+        cnt.assign(m,0);
+        For(i,n)++cnt[rk[i]];
+        FOR(i,1,m)cnt[i]+=cnt[i-1];
+        Rep(i,n)sa[--cnt[rk[id[i]]]]=id[i];
+        rk.swap(tmp);
+        p=rk[sa[0]]=0;
+        FOR(i,1,n){
+            if(tmp[sa[i]]==tmp[sa[i-1]]&&(sa[i]+w<n?tmp[sa[i]+w]:-1)==(sa[i-1]+w<n?tmp[sa[i-1]+w]:-1))rk[sa[i]]=p;
+            else rk[sa[i]]=++p;
+        }
+    }
+    return {rk,sa};
+}
+inline V<int> get_ht(const string &s,const V<int> &rk,const V<int> &sa){
+    int n=s.size();
+    V<int>ht(n-1);
+    for(int i=0,k=0;i<n;++i){
+        if(k)--k;
+        int r=rk[i];
+        if(!r)continue;
+        int j=sa[r-1];
+        while(max(i,j)+k<n&&s[i+k]==s[j+k])++k;
+        ht[r-1]=k;
+    }
+    return ht;
+}
