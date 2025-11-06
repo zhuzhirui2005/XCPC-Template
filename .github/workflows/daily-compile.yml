@@ -18,30 +18,112 @@ jobs:
         shell: bash
         run: |
           # 1) 在 Header.hpp 开头插入依赖
-          sed -i '1iusing namespace std;' Header.hpp
-          sed -i '1i#include <bits/stdc++.h>' Header.hpp
-          sed -i '1i#pragma once' Header.hpp
+          header_prefix=$'#pragma once\n#include <bits/stdc++.h>\nusing namespace std;\n'
+          tmp=$(mktemp)
+          printf '%b' "$header_prefix" > "$tmp"
+          cat Header.hpp >> "$tmp"
+          mv "$tmp" Header.hpp
 
           # 2) 对其它所有 .hpp 文件插入依赖
-          for f in *.hpp; do
-            if [[ "$f" != "Header.hpp" ]]; then
-              if [[ "$f" != "modint.hpp" ]]; then
-                sed -i '1i#include "modint.hpp"' "$f"
+          common_prefix=$'#pragma once\n#include <bits/stdc++.h>\n#include "Header.hpp"\nusing namespace std;\n'
+          readarray -t headers < <(LC_ALL=C printf '%s\n' *.hpp)
+
+          tmpdir=$(mktemp -d)
+          for f in "${headers[@]}"; do
+            cp "$f" "$tmpdir/$f"
+          done
+
+          declare -A symbol_headers
+          while IFS=$'\t' read -r sym file; do
+            symbol_headers["$sym"]+=" $file"
+          done < <(python3 - <<'PY'
+import glob
+import re
+
+patterns = [
+    re.compile(r'^\s*(?:template<[^>]+>\s*)?(?:struct|class)\s+([A-Za-z_]\w*)\b'),
+    re.compile(r'^\s*using\s+([A-Za-z_]\w*)\s*='),
+    re.compile(r'^\s*typedef\b.*\b([A-Za-z_]\w*)\s*;'),
+    re.compile(r'^\s*enum(?:\s+class|\s+struct)?\s+([A-Za-z_]\w*)\b'),
+]
+
+for path in glob.glob('*.hpp'):
+    with open(path, encoding='utf-8', errors='ignore') as fh:
+        for line in fh:
+            for pat in patterns:
+                m = pat.match(line)
+                if m:
+                    print(f"{m.group(1)}\t{path}")
+                    break
+PY
+          )
+
+          for f in "${headers[@]}"; do
+            [[ "$f" == "Header.hpp" ]] && continue
+
+            prefix="$common_prefix"
+
+            while true; do
+              tmp=$(mktemp)
+              printf '%b' "$prefix" > "$tmp"
+              cat "$tmpdir/$f" >> "$tmp"
+              mv "$tmp" "$f"
+
+              log=$(mktemp)
+              if g++ -std=c++17 -O2 -Wall -Wextra -fsyntax-only "$f" >"$log" 2>&1; then
+                rm -f "$log"
+                break
               fi
-              if [[ "$f" != "树状数组.hpp" ]]; then
-                sed -i '1i#include "树状数组.hpp"' "$f"
+
+              mapfile -t symbols < <(python3 - "$log" <<'PY'
+import re
+import sys
+
+with open(sys.argv[1], encoding='utf-8', errors='ignore') as fh:
+    text = fh.read()
+
+patterns = [
+    r"error: ‘([A-Za-z_]\w*)’ was not declared in this scope",
+    r"error: ‘([A-Za-z_]\w*)’ has not been declared",
+    r"error: ‘([A-Za-z_]\w*)’ does not name a type",
+    r"error: ‘([A-Za-z_]\w*)’ is not a member of",
+]
+
+symbols = set()
+for pat in patterns:
+    symbols.update(re.findall(pat, text))
+
+if not symbols:
+    symbols.update(re.findall(r"‘([A-Za-z_]\w*)’", text))
+
+for sym in sorted(symbols):
+    print(sym)
+PY
+              )
+
+              new_dep_added=0
+              for sym in "${symbols[@]}"; do
+                for dep in ${symbol_headers[$sym]:-}; do
+                  [[ -z "$dep" ]] && continue
+                  [[ "$dep" == "$f" || "$dep" == "Header.hpp" ]] && continue
+                  if [[ "$dep" == "pbds.hpp" && "$f" != "pbds.hpp" ]]; then
+                    continue
+                  fi
+                  if [[ "$prefix" == *"#include \"$dep\""* ]]; then
+                    continue
+                  fi
+                  printf -v prefix '%s#include "%s"\n' "$prefix" "$dep"
+                  new_dep_added=1
+                done
+              done
+
+              if [[ $new_dep_added -eq 0 ]]; then
+                cat "$log"
+                exit 1
               fi
-              if [[ "$f" != "并查集.hpp" ]]; then
-                sed -i '1i#include "并查集.hpp"' "$f"
-              fi
-              if [[ "$f" != "离散化.hpp" ]]; then
-                sed -i '1i#include "离散化.hpp"' "$f"
-              fi
-              sed -i '1iusing namespace std;' "$f"
-              sed -i '1i#include "Header.hpp"' "$f"
-              sed -i '1i#include <bits/stdc++.h>' "$f"
-              sed -i '1i#pragma once' "$f"
-            fi
+
+              rm -f "$log"
+            done
           done
 
           # 3) 尝试编译每个文件（若有工程文件可以改成编译整个工程）
