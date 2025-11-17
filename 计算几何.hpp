@@ -106,7 +106,7 @@ struct convex{
     V<vec>p;
     inline int nxt(int k){return k+1==p.size()?0:k+1;}
     inline int pre(int k){return k?k-1:p.size()-1;} // p should not be empty
-    inline void insert(const vec &k){p.pb(k);}
+    inline void add(const vec &k){p.pb(k);}
     inline void init(bool coln=false){
         sort(ALL(p),[&](const vec &u,const vec &v){return u.x!=v.x?u.x<v.x:u.y<v.y;});
         p.erase(unique(ALL(p)),p.end());
@@ -132,6 +132,7 @@ struct convex{
         lo.qb(),hi.qb();
         p.swap(lo),p.insert(p.end(),ALL(hi));
     }
+    inline convex(){}
     inline convex(const V<vec> &p):p(p){init();}
     inline double area(){
         if(p.size()<3)return 0.;
@@ -172,6 +173,27 @@ struct convex{
             ckmax(ret,p[j].dist(p[i]));
             if(j!=k)ckmax(ret,p[j].dist(p[k]));
         }
+        return ret;
+    }
+    inline convex operator+(convex &rhs){
+        if(p.empty()||rhs.p.empty())return {};
+        rotate(p.begin(),min_element(ALL(p),[&](const vec &u,const vec &v){return u.x!=v.x?u.x<v.x:u.y<v.y;}),p.end());
+        rotate(rhs.p.begin(),min_element(ALL(rhs.p),[&](const vec &u,const vec &v){return u.x!=v.x?u.x<v.x:u.y<v.y;}),rhs.p.end());
+        convex ret;
+        ret.p.reserve(p.size()+rhs.p.size()+1);
+        ret.add(p[0]+rhs.p[0]);
+        int i=0,j=0,n=p.size(),m=rhs.p.size();
+        vec nw=ret.p[0];
+        while(i<n&&j<m){
+            vec u=p[i+1<n?i+1:0]-p[i],v=rhs.p[j+1<m?j+1:0]-rhs.p[j];
+            auto w=u.cross(v);
+            if(w>0)++i,ret.add(nw=nw+u);
+            else if(w<0)++j,ret.add(nw=nw+v);
+            else ++i,++j,ret.add(nw=nw+u+v);
+        }
+        while(i<n)ret.add(nw=nw+p[i+1<n?i+1:0]-p[i]),++i;
+        while(j<m)ret.add(nw=nw+rhs.p[j+1<m?j+1:0]-rhs.p[j]),++j;
+        ret.p.pop_back();
         return ret;
     }
 };

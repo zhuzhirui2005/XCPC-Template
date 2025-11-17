@@ -3,8 +3,8 @@ struct disc{
 	// 0-indexed
 	vector<T>d;
 	inline disc(){}
-	inline void insert(const T &x){d.pb(x);}
-	inline void insert(const V<T> &v){d.insert(d.end(),ALL(v));}
+	inline void add(const T &x){d.pb(x);}
+	inline void add(const V<T> &v){d.insert(d.end(),ALL(v));}
 	inline void init(){sort(ALL(d));d.erase(unique(ALL(d)),d.end());}
 	inline disc(const vector<T> &v){d=move(v);init();}
 	inline int query(const T &x){return lower_bound(ALL(d),x)-d.begin();}
