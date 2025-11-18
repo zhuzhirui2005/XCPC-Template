@@ -20,10 +20,11 @@ struct matrix{
 		assert(n<=m);
 		int nw=0;
 		For(i,n){
-			if(!a[nw][i])FOR(j,nw+1,n)if(a[j][i]){swap(a[nw],a[j]);break;}
+			if(!a[nw][i])FOR(j,nw+1,n)if(a[j][i]!=0){swap(a[nw],a[j]);break;}
 			if(a[nw][i]){
+                T inv=1/a[nw][i];
 				For(j,n)if(nw!=j){
-					T coef=a[j][i]/a[nw][i];
+					T coef=a[j][i]*inv;
 					FOR(k,i,m)a[j][k]-=coef*a[nw][k];
 				}
 				++nw;
@@ -31,6 +32,25 @@ struct matrix{
 		}
 		return nw==n;
 	}
+    inline T det(){
+        assert(n==m);
+        T ret=1;
+        For(i,n){
+            if(!a[i][i])FOR(j,i+1,n)if(a[j][i]!=0){
+                ret=-ret;
+                swap(a[i],a[j]);
+                break;
+            }
+            if(!a[i][i])return 0;
+            T inv=1/a[i][i];
+            ret*=a[i][i];
+            FOR(j,i+1,n){
+                T coef=a[j][i]*inv;
+                FOR(k,i,m)a[j][k]-=a[i][k]*coef;
+            }
+        }
+        return ret;
+    }
 	inline matrix unit(){
 		assert(n==m);
 		matrix ret(n,n);

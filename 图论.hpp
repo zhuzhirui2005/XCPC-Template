@@ -258,3 +258,70 @@ struct range_2sat{
 		}
 	}
 };
+
+inline mi matrix_tree_prod(int n,const V<array<int,3>> &to,int dir=3,int rt=0){
+    // dir = 1 为外向生成树，2 为内向生成树，3 为生成树
+    assert(n>0);
+    for(const auto &[u,v,w]:to)assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
+    if(n==1)return 1;
+    matrix<mi>kh(n-1,n-1);
+    for(const auto &[u,v,w]:to)if(u!=v){
+        int u_=u,v_=v;
+        if(u>rt)--u_;
+        if(v>rt)--v_;
+        if(dir&1){
+            if(u!=rt&&v!=rt)kh[u_][v_]-=w;
+            if(v!=rt)kh[v_][v_]+=w;
+        }
+        if(dir&2){
+            if(v!=rt&&u!=rt)kh[v_][u_]-=w;
+            if(u!=rt)kh[u_][u_]+=w;
+        }
+    }
+    return kh.det();
+}
+
+inline mi matrix_tree_sum(int n,const V<array<int,3>> &to,int dir=3,int rt=0){
+    // dir = 1 为外向生成树，2 为内向生成树，3 为生成树
+    assert(n>0);
+    for(const auto &[u,v,w]:to)assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
+    if(n==1)return 1;
+    // 对 (1 + w_i x) 在 mod x^2 意义下跑矩阵树，一次项系数就是 sum(w_i)
+    struct ans_t:pair<mi,mi>{
+        using pair<mi,mi>::pair;
+        inline ans_t operator+(const ans_t &rhs){return {fi+rhs.fi,se+rhs.se};}
+        inline ans_t operator-(const ans_t &rhs){return {fi-rhs.fi,se-rhs.se};}
+        inline ans_t operator*(const ans_t &rhs){return {fi*rhs.se+rhs.fi*se,se*rhs.se};}
+        inline ans_t operator/(const ans_t &rhs){mi inv=1/rhs.se;return {(fi*rhs.se-rhs.fi*se)*inv*inv,se*inv};}
+    };
+    V kh(n-1,V<ans_t>(n-1));
+    for(const auto &[u,v,w]:to)if(u!=v){
+        int u_=u,v_=v;
+        if(u>rt)--u_;
+        if(v>rt)--v_;
+        if(dir&1){
+            if(u!=rt&&v!=rt)kh[u_][v_]=kh[u_][v_]-ans_t(w,1);
+            if(v!=rt)kh[v_][v_]=kh[v_][v_]+ans_t(w,1);
+        }
+        if(dir&2){
+            if(v!=rt&&u!=rt)kh[v_][u_]=kh[v_][u_]-ans_t(w,1);
+            if(u!=rt)kh[u_][u_]=kh[u_][u_]+ans_t(w,1);
+        }
+    }
+    ans_t ret={0,1};
+    For(i,n-1){
+        if(!kh[i][i].se)FOR(j,i+1,n-1)if(kh[j][i].se!=0){
+            ret.fi=-ret.fi,ret.se=-ret.se;
+            swap(kh[i],kh[j]);
+            break;
+        }
+        if(!kh[i][i].se)return 0;
+        ans_t inv=ans_t(0,1)/kh[i][i];
+        ret=ret*kh[i][i];
+        FOR(j,i+1,n-1){
+            ans_t coef=kh[j][i]*inv;
+            FOR(k,i,n-1)kh[j][k]=kh[j][k]-coef*kh[i][k];
+        }
+    }
+    return ret.fi;
+}
