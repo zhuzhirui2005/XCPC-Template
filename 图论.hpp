@@ -393,7 +393,7 @@ inline mi matrix_tree_sum(int n,const V<array<int,3>> &to,int dir=3,int rt=0){
     // dir = 1 为外向生成树，2 为内向生成树，3 为生成树
     assert(n>0);
     for(const auto &[u,v,w]:to)assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
-    if(n==1)return 1;
+    if(n==1)return 0;
     // 对 (1 + w_i x) 在 mod x^2 意义下跑矩阵树，一次项系数就是 sum(w_i)
     struct ans_t:pair<mi,mi>{
         using pair<mi,mi>::pair;
@@ -432,4 +432,55 @@ inline mi matrix_tree_sum(int n,const V<array<int,3>> &to,int dir=3,int rt=0){
         }
     }
     return ret.fi;
+}
+
+inline mi matrix_tree_sum(int n,int k,const V<array<int,3>> &to,int dir=3,int rt=0){
+    // dir = 1 为外向生成树，2 为内向生成树，3 为生成树
+    assert(n>0),assert(k>=0);
+    for(const auto &[u,v,w]:to)assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
+    if(n==1)return !k;
+    comb_table ct(k);
+    V kh(n-1,V(n-1,V<mi>(k+1)));
+    for(const auto &[u,v,w]:to)if(u!=v){
+        int u_=u,v_=v;
+        if(u>rt)--u_;
+        if(v>rt)--v_;
+        V<mi>pw(k+1);
+        pw[0]=1;
+        For(i,k)pw[i+1]=pw[i]*w;
+        if(dir&1){
+            if(u!=rt&&v!=rt)For(i,k+1)kh[u_][v_][i]-=pw[i];
+            if(v!=rt)For(i,k+1)kh[v_][v_][i]+=pw[i];
+        }
+        if(dir&2){
+            if(v!=rt&&u!=rt)For(i,k+1)kh[v_][u_][i]-=pw[i];
+            if(u!=rt)For(i,k+1)kh[u_][u_][i]+=pw[i];
+        }
+    }
+    V<mi>ret(k+1);
+    ret[0]=1;
+    For(i,n-1){
+        if(!kh[i][i][0])FOR(j,i+1,n-1)if(kh[j][i][0]!=0){
+            for(mi &l:ret)l=-l;
+            swap(kh[i],kh[j]);
+            break;
+        }
+        if(!kh[i][i][0])return 0;
+        V<mi>inv(k+1);
+        inv[0]=1/kh[i][i][0];
+        FOR(j,1,k+1){
+            FOR(l,1,j+1)inv[j]+=ct.C(j,l)*kh[i][i][l]*inv[j-l];
+            inv[j]*=-inv[0];
+        }
+        Rep(j,k+1){
+            FOR(l,1,k+1-j)ret[j+l]+=ct.C(j+l,l)*ret[j]*kh[i][i][l];
+            ret[j]*=kh[i][i][0];
+        }
+        FOR(j,i+1,n-1){
+            V<mi>coef(k+1);
+            For(l,k+1)For(m,k+1-l)coef[l+m]+=ct.C(l+m,m)*kh[j][i][l]*inv[m];
+            FOR(l,i,n-1)For(m,k+1)For(o,k+1-m)kh[j][l][m+o]-=ct.C(m+o,m)*coef[m]*kh[i][l][o];
+        }
+    }
+    return ret[k];
 }
