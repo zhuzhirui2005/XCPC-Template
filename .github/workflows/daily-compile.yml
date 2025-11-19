@@ -23,24 +23,23 @@ jobs:
           sed -i '1i#pragma once' Header.hpp
 
           # 2) 对其它所有 .hpp 文件插入依赖
+          deps=(
+            "矩阵.hpp:数论.hpp"
+            "modint.hpp:数论.hpp"
+            "modint.hpp:poly.hpp"
+            "树状数组.hpp:vector.hpp"
+            "数论.hpp:图论.hpp"
+            "并查集.hpp:图论.hpp"
+            "离散化.hpp:字符串.hpp"
+          )
+          for pair in "${deps[@]}"; do
+            IFS=: read -r dep target <<< "$pair"
+            sed -i "1i#include \"${dep}\"" "$target"
+          done
+
           for f in *.hpp; do
             if [[ "$f" != "Header.hpp" ]]; then
-              if [[ "$f" != "modint.hpp" ]]; then
-                sed -i '1i#include "modint.hpp"' "$f"
-              fi
-              if [[ "$f" != "树状数组.hpp" ]]; then
-                sed -i '1i#include "树状数组.hpp"' "$f"
-              fi
-              if [[ "$f" != "并查集.hpp" ]]; then
-                sed -i '1i#include "并查集.hpp"' "$f"
-              fi
-              if [[ "$f" != "离散化.hpp" ]]; then
-                sed -i '1i#include "离散化.hpp"' "$f"
-              fi
-              sed -i '1iusing namespace std;' "$f"
               sed -i '1i#include "Header.hpp"' "$f"
-              sed -i '1i#include <bits/stdc++.h>' "$f"
-              sed -i '1i#pragma once' "$f"
             fi
           done
 
