@@ -11,23 +11,6 @@ struct dsu{
 	inline bool same(int x,int y){return find(x)==find(y);}
 	inline int size(int k){return -fa[find(k)];}
 };
-inline pair<V<V<int>>,V<int>> kruskal_tree(int n,V<array<int,3>> &e){
-    int cnt=n;
-    dsu d(n+n-1);
-    V<V<int>>to(n+n-1);
-    V<int>val(n+n-1);
-    sort(ALL(e),[&](const auto &x,const auto &y){return x[2]<y[2];});
-    for(const auto &i:e){
-        int fx=d.find(i[0]),fy=d.find(i[1]);
-        if(fx!=fy){
-            d.fa[fx]=d.fa[fy]=cnt;
-            to[cnt].pb(fx),to[cnt].pb(fy);
-            val[cnt++]=i[2];
-        }
-    }
-    assert(cnt==n+n-1);
-    return {to,val};
-}
 
 struct range_dsu{
 	V<V<int>>fa;
