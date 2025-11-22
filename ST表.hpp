@@ -3,13 +3,16 @@ struct ST{
 	V<V<T>>st;
 	inline ST(){}
 	inline ST(const V<T> &a){
-		int n=a.size(),B=__lg(n);
-		V<V<T>>(B+1).swap(st);
-		st[0]=a;
-		FOR(i,1,B+1){
-			st[i].resize(n-(1<<i)+1);
-			For(j,n-(1<<i)+1)st[i][j]=merge(st[i-1][j],st[i-1][j+(1<<i-1)]);
-		}
+		int n=a.size();
+        if(n){
+            int B=__lg(n);
+            V<V<T>>(B+1).swap(st);
+            st[0]=a;
+            FOR(i,1,B+1){
+                st[i].resize(n-(1<<i)+1);
+                For(j,n-(1<<i)+1)st[i][j]=merge(st[i-1][j],st[i-1][j+(1<<i-1)]);
+            }
+        }
 	}
 	inline ST(const V<T> &a,const V<int> &pos){
 		assert(a.size()==pos.size());
