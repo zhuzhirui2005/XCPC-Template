@@ -166,6 +166,7 @@ inline V<int> get_ext(const V<int> &z,const string &s,const string &t){
 inline tuple<V<int>,V<int>> suffix_array(const string &s,int m=128){
     int n=s.size();
     V<int>cnt(m),id(n),rk(n),sa(n),tmp(n);
+    if(n==1)return {rk,sa};
     For(i,n)++cnt[rk[i]=s[i]];
     FOR(i,1,m)cnt[i]+=cnt[i-1];
     Rep(i,n)sa[--cnt[rk[i]]]=i;
