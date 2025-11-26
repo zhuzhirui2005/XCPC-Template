@@ -200,3 +200,61 @@ inline V<int> get_ht(const string &s,const V<int> &rk,const V<int> &sa){
     }
     return ht;
 }
+
+template<int l=1>
+inline V<int> shift_and(const string s,const string &t,char wc='*'){
+    for(char c:s)assert(c==wc||islower(c));
+    for(char c:t)assert(c==wc||islower(c));
+    int n=s.size(),m=t.size();
+    static const int lim=1'000'000;
+    if(l<=lim&&l<n)return shift_and<l<<1>(s,t);
+    bitset<l>a;
+    V<bitset<l>>b(26);
+    For(i,n){
+        if(s[i]==wc)For(j,26)b[j].set(i);
+        else b[s[i]-'a'].set(i);
+    }
+    a.flip();
+    For(i,m)if(t[i]!=wc)a&=b[t[i]-'a']>>i;
+    V<int>ret;
+    For(i,n-m+1)if(a[i])ret.pb(i);
+    return ret;
+}
+
+inline V<int> ntt_match(const string &s,const string &t,int g,char wc='*'){
+    int n=s.size(),m=t.size();
+    V<mi>a(n-m+1),b(n),c(m),d;
+    For(i,n){
+        if(s[i]==wc)b[i]=0;
+        else b[i]=(mi)s[i]*s[i]*s[i];
+    }
+    For(i,m){
+        if(t[i]==wc)c[i]=0;
+        else c[i]=t[i];
+    }
+    d=poly_conv_sub(b,c,g);
+    For(i,n-m+1)a[i]+=d[i];
+    For(i,n){
+        if(s[i]==wc)b[i]=0;
+        else b[i]=(mi)s[i]*s[i];
+    }
+    For(i,m){
+        if(t[i]==wc)c[i]=0;
+        else c[i]=(mi)t[i]*t[i];
+    }
+    d=poly_conv_sub(b,c,g);
+    For(i,n-m+1)a[i]-=d[i]+d[i];
+    For(i,n){
+        if(s[i]==wc)b[i]=0;
+        else b[i]=s[i];
+    }
+    For(i,m){
+        if(t[i]==wc)c[i]=0;
+        else c[i]=(mi)t[i]*t[i]*t[i];
+    }
+    d=poly_conv_sub(b,c,g);
+    For(i,n-m+1)a[i]+=d[i];
+    V<int>ret;
+    For(i,n-m+1)if(!a[i])ret.pb(i);
+    return ret;
+}

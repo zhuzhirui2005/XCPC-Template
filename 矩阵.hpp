@@ -67,6 +67,11 @@ struct matrix{
 		for(;k;k>>=1,base=base*base)if(k&1)ret=ret*base;
 		return ret;
 	}
+    inline matrix pow_mul(const matrix &rhs,ull k)const{
+		matrix base=*this,ret=rhs; 
+		for(;k;k>>=1,base=base*base)if(k&1)ret=base*ret;
+		return ret;
+	}
 };
 
 template<class T>
