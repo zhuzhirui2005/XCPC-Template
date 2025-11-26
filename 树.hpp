@@ -1,7 +1,7 @@
 template<class T>
 inline V<pii> cart_seq(const V<T> &v,function<bool(T,T)>cmp=[](T x,T y){return x>y;}){
 	int n=v.size();
-	V<pii>ret(n,pii(-1,n));
+	V<pii>ret(n,pii(0,n-1));
 	stack<int>st;
 	For(i,n){
 		while(st.size()&&cmp(v[i],v[st.top()]))ret[st.top()].se=i-1,st.pop();
