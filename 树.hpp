@@ -1,7 +1,7 @@
 template<class T>
 inline V<pii> cart_seq(const V<T> &v,function<bool(T,T)>cmp=[](T x,T y){return x>y;}){
 	int n=v.size();
-	V<pii>ret(n,pii(-1,n));
+	V<pii>ret(n,pii(0,n-1));
 	stack<int>st;
 	For(i,n){
 		while(st.size()&&cmp(v[i],v[st.top()]))ret[st.top()].se=i-1,st.pop();
@@ -221,4 +221,22 @@ inline V<int> tr2pru(const V<V<int>> &to){
 		for(int i:to[p])if(i<n-1&&!~fa[i])fa[i]=p,q.push(i);
 	}
 	return fa2pru(fa);
+}
+
+inline V<int> ahu(int n,const V<V<int>> &to,int rt=0){
+    assert(n>=0),assert(to.size()==n);
+    For(i,n)for(int j:to[i])assert(0<=j),assert(j<n);
+    V<int>a(n);
+    static genID<V<int>,map<V<int>,int>>g;
+    auto dfs=[&](auto &&self,int p,int fa)->void{
+        V<int>tmp;
+        for(int i:to[p])if(i!=fa){
+            self(self,i,p);
+            tmp.pb(a[i]);
+        }
+        sort(ALL(tmp));
+        a[p]=g.get_id(tmp);
+    };
+    dfs(dfs,rt,-1);
+    return a;
 }

@@ -37,11 +37,9 @@ inline V<ll> dijkstra(int n,int s,const V<V<pair<int,T>>> &to,ll null=-1){
     return dis;
 }
 
-inline V<array<int,3>> kruskal(int n,const V<V<pii>> &to,function<bool(const array<int,3> &,const array<int,3> &)>cmp=[](const array<int,3> x,const array<int,3> &y){return x[2]<y[2];}){
-	assert(0<=n),assert(to.size()<=n);
-	for(const V<pii> &i:to)for(const pii &j:i)assert(j.fi<n);
-	V<array<int,3>>e;
-	For(i,to.size())for(const pii &j:to[i])assert(0<=j.fi),assert(j.fi<n),e.pb({i,j.fi,j.se});
+inline V<array<int,3>> kruskal(int n,V<array<int,3>> &e,function<bool(const array<int,3> &,const array<int,3> &)>cmp=[](const array<int,3> x,const array<int,3> &y){return x[2]<y[2];}){
+	assert(n>=0);
+	for(const auto &[u,v,w]:e)assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
 	sort(ALL(e),cmp);
 	dsu d(n);
 	V<array<int,3>>ret;

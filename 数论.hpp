@@ -41,27 +41,6 @@ inline ll exCRT(const V<T> &a,const V<T> &m){
 	return ret;
 }
 
-inline V<int> inverse(int n,int p=mod){
-	V<int>inv(n+1);
-	inv[1]=1;
-	FOR(i,2,n+1)inv[i]=1ll*(p-p/i)*inv[p%i]%p;
-	return inv;
-}
-
-inline V<V<int>> comb(int n,int m=-1,int p=mod){
-	if(m==-1)m=n;
-	if(n<m||m<0)return V<V<int>>();
-    V<V<int>>C(n+1,V<int>(m+1));
-    For(i,n+1){
-        C[i][0]=1;
-        FOR(j,1,min(i+1,m+1)){
-            C[i][j]=C[i-1][j-1]+C[i-1][j];
-            if(C[i][j]>=p)C[i][j]-=p;
-        }
-    }
-    return C;
-}
-
 struct comb_table{
 	int n;
 	V<mi>fac,ifac;
@@ -310,3 +289,40 @@ struct fp2{
     friend fp2 operator*(mi lhs,const fp2&rhs){return fp2(lhs*rhs.a,lhs*rhs.b);}
     friend fp2 operator/(mi lhs,const fp2&rhs){assert(rhs.a.val||rhs.b.val);mi inv=1/(rhs.a*rhs.a-rhs.b*rhs.b*w2);return fp2(lhs*rhs.a*inv,-lhs*rhs.b*inv);}
 };
+
+void euclid(int a,int b,int c,int n,matrix<mi> &M,const matrix<mi> &U,const matrix<mi> &R){
+    if(b>=c){
+        M=M.mul_pow(U,b/c);
+        euclid(a,b%c,c,n,M,U,R);
+    }
+    else if(a>=c)euclid(a%c,b,c,n,M,U,U.pow_mul(R,a/c));
+    else{
+        int m=(1ll*a*n+b)/c;
+        if(m){
+            M=M.mul_pow(R,(c-b-1)/a),M=M*U;
+            euclid(c,(c-b-1)%a,a,m-1,M,R,U);
+            M=M.mul_pow(R,n-(1ll*c*m-b-1)/a);
+        }
+        else M=M.mul_pow(R,n);
+    }
+}
+inline mi under_line(int a,int b,int c,int n,int k1,int k2){
+    int k=max(k1,k2)+1;
+    V C(k,V<mi>(k));
+    For(i,k){
+        C[i][0]=C[i][i]=1;
+        FOR(j,1,i)C[i][j]=C[i-1][j-1]+C[i-1][j];
+    }
+    // sum(x^k1 * ((ax+b)/c)^k2) for x in [0, n]
+    auto idx=[&](int u,int v){return u*(k2+1)+v;};
+    k=idx(k1,k2)+2;
+    matrix<mi>M(1,k),R(k,k),U(k,k);
+    For(i,k1+1)M[0][idx(i,0)]=1; // 执行 R 的时候已经统计答案了，所以要提前 +1
+    For(i,k1+1)For(j,k2+1){
+        For(l,i+1)R[idx(l,j)][idx(i,j)]=C[i][l];
+        For(l,j+1)U[idx(i,l)][idx(i,j)]=C[j][l];
+    }
+    R[idx(k1,k2)][k-1]=R[k-1][k-1]=U[k-1][k-1]=1;
+    euclid(a,b,c,n,M,U,R);
+    return M[0][k-1]+(k1?0:(mi(b/c)^k2));
+}
