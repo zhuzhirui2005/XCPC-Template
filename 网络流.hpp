@@ -1,4 +1,5 @@
 struct maxflow{
+    V<int>dep;
 	V<pii>e;
 	V<V<int>>hd;
 	int n,S,T;
@@ -15,22 +16,23 @@ struct maxflow{
 		For(i,n)for(const pii &j:to[i])add_edge(i,j.fi,j.se);
 		S=_S,T=_T;
 	}
-	inline ll dinic(){
-		assert(S!=-1),assert(T!=-1);
-		V<int>dep;
+	inline ll dinic(int s=-1,int t=-1){
+        if(!~s)s=S;
+        if(!~t)t=T;
+		assert(~s),assert(~t);
 		auto bfs=[&](){
-			V<int>(n).swap(dep);
-			dep[S]=1;
+			dep.assign(n,0);
+			dep[s]=1;
 			queue<int>q;
-			q.push(S);
+			q.push(s);
 			while(q.size()){
 				int p=q.front();q.pop();
 				for(int i:hd[p])if(e[i].se&&!dep[e[i].fi])dep[e[i].fi]=dep[p]+1,q.push(e[i].fi);
 			}
-			return dep[T];
+			return dep[t];
 		};
 		function<ll(int,ll)>dfs=[&](int p,ll lim){
-			if(p==T)return lim;
+			if(p==t)return lim;
 			ll sum=0;
 			for(int i:hd[p])if(e[i].se&&dep[p]+1==dep[e[i].fi]){
 				ll f=dfs(e[i].fi,min((ll)e[i].se,lim-sum));
@@ -41,9 +43,32 @@ struct maxflow{
 			return sum;
 		};
 		ll ret=0;
-		while(bfs())ret+=dfs(S,infl);
+		while(bfs())ret+=dfs(s,infl);
 		return ret;
 	}
+    inline V<V<pil>> gomoryhu(){
+        V<int>f(e.size()),id(n),tmp(n);
+        iota(ALL(id),0);
+        shuffle(ALL(id),mt19937(time(0)));
+        V<V<pil>>to(n);
+        auto build=[&](auto &&self,int l,int r)->void{
+            if(l==r)return;
+            For(i,e.size())f[i]=e[i].se;
+            ll w=dinic(id[l],id[r]);
+            to[id[l]].eb(id[r],w),to[id[r]].eb(id[l],w);
+            int L=l,R=r;
+            FOR(i,l,r+1){
+                if(dep[id[i]])tmp[L++]=id[i];
+                else tmp[R--]=id[i];
+            }
+            assert(L==R+1);
+            copy(tmp.begin()+l,tmp.begin()+r+1,id.begin()+l);
+            For(i,e.size())e[i].se=f[i];
+            self(self,l,R),self(self,L,r);
+        };
+        build(build,0,n-1);
+        return to;
+    }
 };
 
 struct mincost{
