@@ -1,9 +1,9 @@
 struct maxflow{
     V<int>dep;
-	V<pii>e;
+	V<pil>e;
 	V<V<int>>hd;
 	int n,S,T;
-	inline void add_edge(int x,int y,int z){
+	inline void add_edge(int x,int y,ll z){
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
 		hd[x].pb(e.size()),e.eb(y,z),hd[y].pb(e.size()),e.eb(x,0);
 	}
@@ -11,9 +11,10 @@ struct maxflow{
 		V<V<int>>(n=_n).swap(hd);
 		S=_S,T=_T;
 	}
-	inline maxflow(const V<V<pii>> &to,int _S=-1,int _T=-1){
+    template<class U>
+	inline maxflow(const V<V<pair<int,U>>> &to,int _S=-1,int _T=-1){
         V<V<int>>(n=to.size()).swap(hd);
-		For(i,n)for(const pii &j:to[i])add_edge(i,j.fi,j.se);
+		For(i,n)for(const auto &[j,k]:to[i])add_edge(i,j,k);
 		S=_S,T=_T;
 	}
 	inline ll dinic(int s=-1,int t=-1){
@@ -70,6 +71,44 @@ struct maxflow{
         return to;
     }
 };
+
+inline pair<ll,V<int>> boundflow(int n,const V<array<int,4>> &e,int tp=0,int S=-1,int T=-1){
+    // 0/1/2 can/max/min
+    assert(tp>=0),assert(tp<=2);
+    if(tp)assert(S>=0),assert(S<n),assert(T>=0),assert(T<n);
+    else assert(!~S==!~T);
+    if(S==T)S=T=-1,tp=0;
+    V<ll>d(n);
+    maxflow mf(n+2,n,n+1);
+    for(const auto &[u,v,l,r]:e){
+        assert(u>=0),assert(u<n),assert(v>=0),assert(v<n);
+        assert(l>=0),assert(l<=r);
+        d[u]-=l,d[v]+=l;
+        mf.add_edge(u,v,r-l);
+    }
+    if(~S)mf.add_edge(T,S,infl);
+    ll sum=0;
+    For(i,n){
+        if(d[i]>0)mf.add_edge(mf.S,i,d[i]),sum+=d[i];
+        if(d[i]<0)mf.add_edge(i,mf.T,-d[i]);
+    }
+    ll f=mf.dinic();
+    assert(f<=sum);
+    if(f<sum)return {-1,{}};
+    if(~T){
+        Rep(i,n)if(d[i])mf.e.qb(),mf.e.qb(),mf.hd[i].qb();
+        f=mf.e[mf.hd[S].back()].se;
+        mf.e.qb(),mf.e.qb(),mf.hd[S].qb(),mf.hd[T].qb();
+        mf.hd.qb(),mf.hd.qb(),mf.n=n;       
+    }
+    else f=0;
+    if(tp&1)f+=mf.dinic(S,T);
+    if(tp&2)ckmax(f-=mf.dinic(T,S),0ll); // 流量平衡时残量网络等于原网络，可能导致答案为负
+    V<int>p(n),ret;
+    ret.reserve(e.size());
+    for(const auto &[u,v,l,r]:e)ret.pb(l+mf.e[mf.hd[v][p[v]++]].se),++p[u];
+    return {f,ret};
+}
 
 struct mincost{
 	V<array<int,3>>e;
