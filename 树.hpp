@@ -150,6 +150,7 @@ struct tree_chain{
 		return ret;
 	}
 };
+
 inline void virt_tree(V<int> &p,const tree_chain &tc,V<V<int>> &to){
     sort(ALL(p),[&](int x,int y){return tc.seg[x]<tc.seg[y];});
     p.erase(unique(ALL(p)),p.end());
