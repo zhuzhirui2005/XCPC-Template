@@ -13,6 +13,7 @@ typedef unsigned long long ull;
 #define qf pop_front
 #define eb emplace_back
 typedef pair<int,int> pii;
+typedef pair<int,ll> pil;
 typedef pair<ll,int> pli;
 #define fi first
 #define se second
