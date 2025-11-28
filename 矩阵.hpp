@@ -87,11 +87,13 @@ struct dis_matrix{
 	inline dis_matrix operator*(const dis_matrix &rhs){
 		assert(m==rhs.n);
 		dis_matrix ret(n,rhs.m,is_same<T,int>::value?inf:infl);
+		dis_matrix ret(n,rhs.m,is_same_v<T,int>?inf:infl);
 		For(i,n)For(j,rhs.m)For(k,m)ckmin(ret[i][j],a[i][k]+rhs[k][j]);
 		return ret;
 	}
 	inline dis_matrix pow(ull k){
 		dis_matrix base=*this,ret(n,n,is_same<T,int>::value?inf:infl);
+		dis_matrix base=*this,ret(n,n,is_same_v<T,int>?inf:infl);
 		for(;k;k>>=1,base=base*base)if(k&1)ret=ret*base;
 		return ret;
 	}

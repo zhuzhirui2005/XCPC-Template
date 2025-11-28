@@ -5,6 +5,11 @@ struct delpq{
     inline delpq(const U &func){priority_queue<T,V<T>,U>(func).swap(q1),priority_queue<T,V<T>,U>(func).swap(q2);}
     inline void push(const T &x){q1.push(x);}
     inline void pop(const T &x){q2.push(x);}
+    inline void pop(){
+        while(q2.size()&&q1.top()==q2.top())q1.pop(),q2.pop();
+        assert(q1.size());
+        q1.pop();
+    }
     inline T top(){
         while(q2.size()&&q1.top()==q2.top())q1.pop(),q2.pop();
         assert(q1.size());

@@ -500,3 +500,63 @@ inline mi matrix_tree_sum(int n,int k,const V<array<int,3>> &to,int dir=3,int rt
     }
     return ret[k];
 }
+
+#pragma GCC target("popcnt")
+inline tuple<int,ll,V<int>> indpset(int n,const V<ull> &to){
+    assert(n>=0),assert(n<=64),assert(to.size()==n);
+    For(i,n)assert(to[i]<1ull<<n),assert(!(to[i]>>i&1));
+    auto dfs=[&](auto &&self,ull S)->pair<ull,ll>{
+        if(!S)return {0,1};
+        int d=-1,p=-1;
+        for(ull i=S;i;i&=i-1){
+            int j=__builtin_ctzll(i);
+            if(ckmax(d,__builtin_popcountll(to[j]&S)))p=j;
+        }
+        if(d<3){
+            pair<ull,ll>ret={0,1};
+            ull T=S;
+            while(T){
+                bool flag=true;
+                ull SS=0,TT=0;
+                auto dfs=[&](auto &&self,int p,bool c)->void{
+                    (c?SS:TT)|=1ull<<p;
+                    flag&=__builtin_popcountll(to[p]&S)==2;
+                    T^=1ull<<p;
+                    for(ull i=to[p]&T;i;i=to[p]&T)self(self,__lg(i),!c);
+                };
+                dfs(dfs,__lg(T),true);
+                int x=__builtin_popcountll(SS),y=__builtin_popcountll(TT),z=x+y;
+                if(x>y)swap(SS,TT),swap(x,y);
+                if(flag){
+                    if(z&1)ret.fi|=SS,ret.se*=z;
+                    else ret.fi|=TT,ret.se+=ret.se;
+                }
+                else{
+                    ret.fi|=TT;
+                    if(!(z&1))ret.se*=(z>>1)+1;
+                }
+            }
+            return ret;
+        }
+        else{
+            ull nw=1ull<<p;
+            auto SS=self(self,S^nw),TT=self(self,S&~(nw|to[p]));
+            int x=__builtin_popcountll(SS.fi),y=1+__builtin_popcountll(TT.fi);
+            if(x==y)return {SS.fi,SS.se+TT.se};
+            return x>y?SS:pair<ull,ll>(TT.fi|nw,TT.se);
+        }
+    };
+    auto [T,c]=dfs(dfs,(1ull<<n)-1);
+    V<int>ret;
+    For(i,n)if(T>>i&1)ret.pb(i);
+    return {ret.size(),c,ret};
+}
+inline tuple<int,ll,V<int>> clique(int n,const V<ull> &to){
+    assert(n>=0),assert(n<=64),assert(to.size()==n);
+    V<ull>e(n);
+    For(i,n){
+        assert(to[i]<1ull<<n),assert(!(to[i]>>i&1));
+        e[i]=(~to[i]&((1ull<<n)-1))^(1ull<<i);
+    }
+    return indpset(n,e);
+}
