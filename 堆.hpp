@@ -1,8 +1,8 @@
 template<class T,class U=less<T>>
 struct delpq{
+    const U cmp=U();
     priority_queue<T,V<T>,U>q1,q2;
-    inline delpq(){}
-    inline delpq(const U &func):q1(func),q2(func){}
+    inline delpq():q1(cmp),q2(cmp){}
     inline void push(const T &x){q1.push(x);}
     inline void pop(const T &x){q2.push(x);}
     inline void pop(){
@@ -22,28 +22,22 @@ struct delpq{
 template<class T>
 struct kpq{
     int k;
-    multiset<T>s1,s2;
-    ll sum;
-    inline kpq(int k=0):k(k),sum(0){}
-    inline void insert(const T &x){
-        if(s1.size()<k)s1.insert(x),sum+=x;
+    delpq<T,greater<T>>s1;
+    delpq<T>s2;
+    ll sum; // 暂时默认对堆中前 k 大的数求和
+    inline kpq(int k=0):k(k),sum(0){static_assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));}
+    inline void push(const T &x){
+        if(s1.size()<k)s1.push(x),sum+=x;
         else{
-            if(x>*s1.begin())s2.insert(*s1.begin()),sum-=*s1.begin(),s1.erase(s1.begin()),s1.insert(x),sum+=x;
-            else s2.insert(x);
+            if(s1.top()<x)s2.push(s1.top()),sum-=s1.top(),s1.pop(),s1.push(x),sum+=x;
+            else s2.push(x);
         }
     }
-    inline void erase(const T &x){
-        if(s1.size()&&x<*s1.begin()){
-            auto it=s2.find(x);
-            assert(it!=s2.end());
-            s2.erase(it);
-        }
+    inline void pop(const T &x){
+        if(s1.size()&&x<s1.top())s2.pop(x);
         else{
-            auto it=s1.find(x);
-            assert(it!=s1.end());
-            s1.erase(it);
-            sum-=x;
-            if(s1.size()<k&&s2.size())s1.insert(*s2.rbegin()),sum+=*s2.rbegin(),s2.erase(prev(s2.end()));
+            sum-=x,s1.pop(x);
+            if(s1.size()<k&&s2.size())s1.push(s2.top()),sum+=s2.top(),s2.pop();
         }
     }
 };
