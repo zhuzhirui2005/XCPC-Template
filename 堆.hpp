@@ -2,7 +2,7 @@ template<class T,class U=less<T>>
 struct delpq{
     priority_queue<T,V<T>,U>q1,q2;
     inline delpq(){}
-    inline delpq(const U &func){priority_queue<T,V<T>,U>(func).swap(q1),priority_queue<T,V<T>,U>(func).swap(q2);}
+    inline delpq(const U &func):q1(func),q2(func){}
     inline void push(const T &x){q1.push(x);}
     inline void pop(const T &x){q2.push(x);}
     inline void pop(){
@@ -24,7 +24,7 @@ struct kpq{
     int k;
     multiset<T>s1,s2;
     ll sum;
-    inline kpq(int _k=0):k(_k),sum(0){}
+    inline kpq(int k=0):k(k),sum(0){}
     inline void insert(const T &x){
         if(s1.size()<k)s1.insert(x),sum+=x;
         else{

@@ -1,4 +1,4 @@
-// assumed that [mod<=INT_MAX] is true
+// 部分函数需要 mod <= INT_MAX
 
 template<class T>
 T exgcd(const T &a,const T &b,T &x,T &y){
@@ -44,9 +44,8 @@ inline ll exCRT(const V<T> &a,const V<T> &m){
 struct comb_table{
 	int n;
 	V<mi>fac,ifac;
-	inline comb_table(int n_=0){n=n_,init();}
+	inline comb_table(int n=0):n(n),fac(n+1),ifac(n+1){init();}
 	inline void init(){
-		V<mi>(n+1).swap(fac),V<mi>(n+1).swap(ifac);
 		fac[0]=1;
 		FOR(i,1,n+1)fac[i]=fac[i-1]*i;
 		ifac[n]=1/fac[n];
@@ -57,12 +56,11 @@ struct comb_table{
 
 struct pri_table{
 	int n;
-	// fac[i] is the minimum prime factor of i
+	// fac[i] 是 i 的最小质因子
 	V<int>fac,pri;
-	inline pri_table(int n_=0){n=n_,init();}
+	inline pri_table(int n=0):n(n),fac(n+1){init();}
 	inline void init(){
         if(n<1)return;
-		V<int>(n+1).swap(fac),V<int>().swap(pri);
 		fac[1]=1;
 		FOR(i,2,n+1){
 			if(!fac[i])fac[i]=i,pri.pb(i);
@@ -91,10 +89,9 @@ struct mu_table{
 	int n;
 	V<int>mu,pri;
 	V<bool>vis;
-	inline mu_table(int n_=0){n=n_,init();}
+	inline mu_table(int n=0):n(n),mu(n+1),vis(n+1){init();}
 	inline void init(){
         if(n<1)return;
-		V<int>(n+1).swap(mu),V<int>().swap(pri),V<bool>(n+1).swap(vis);
 		mu[1]=1;
 		FOR(i,2,n+1){
 			if(!vis[i])mu[i]=-1,pri.pb(i);
@@ -112,10 +109,9 @@ struct mu_table{
 struct phi_table{
 	int n;
 	V<int>phi,pri;
-	inline phi_table(int n_=0){n=n_,init();}
+	inline phi_table(int n=0):n(n),phi(n+1){init();}
 	inline void init(){
         if(n<1)return;
-		V<int>(n+1).swap(phi),V<int>().swap(pri);
 		phi[1]=1;
 		FOR(i,2,n+1){
 			if(!phi[i])phi[i]=i-1,pri.pb(i);
@@ -136,10 +132,9 @@ struct d_table{
 	int n;
 	V<int>cnt,d,pri;
 	V<bool>vis;
-	inline d_table(int n_=0){n=n_,init();}
+	inline d_table(int n=0):n(n),cnt(n+1),d(n+1),vis(n+1){init();}
 	inline void init(){
         if(n<1)return;
-		V<int>(n+1).swap(cnt),V<int>(n+1).swap(d),V<int>().swap(pri),V<bool>(n+1).swap(vis);
 		cnt[1]=d[1]=1;
 		FOR(i,2,n+1){
 			if(!vis[i])cnt[i]=1,d[i]=2,pri.pb(i);
@@ -224,8 +219,8 @@ T du_sieve(T n,const V<T> &pre_f,const function<T(T)> &pre_g,const function<T(T)
 
 struct vote_1{
 	pii v;
-	inline vote_1(){v={-1,0};}
-	inline vote_1(int id,int cnt=1){v={id,cnt};}
+	inline vote_1():v(-1,0){}
+	inline vote_1(int id,int cnt=1):v(id,cnt){}
 	inline vote_1 operator+(const vote_1 &rhs){
 		vote_1 ret=*this;
 		if(!~ret.v.fi)ret=rhs;
@@ -243,8 +238,8 @@ struct vote_1{
 template<int(*n)()>
 struct vote{
 	V<pii>v;
-	inline vote(){V<pii>(n(),{-1,0}).swap(v);}
-	inline vote(int id,int cnt=1){V<pii>(n(),{-1,0}).swap(v),v[0]={id,cnt};}
+	inline vote():v(n(),{-1,0}){}
+	inline vote(int id,int cnt=1):v(n(),{-1,0}){v[0]={id,cnt};}
 	inline vote operator+(const vote<n> &rhs){
 		vote<n>ret=*this;
 		for(pii i:rhs.v){
@@ -264,7 +259,7 @@ struct vote{
 template<int w2>
 struct fp2{
     mi a,b;
-    inline fp2(mi _a=0,mi _b=0):a(_a),b(_b){}
+    inline fp2(mi a=0,mi b=0):a(a),b(b){}
     inline fp2 operator+(mi rhs)const{return fp2(a+rhs,b);}
     inline fp2 operator-(mi rhs)const{return fp2(a-rhs,b);}
     inline fp2 operator*(mi rhs)const{return fp2(a*rhs,b*rhs);}

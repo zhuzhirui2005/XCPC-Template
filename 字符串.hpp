@@ -1,6 +1,6 @@
 inline int lcs(const string &a,const string &b){
 	if(a.empty()||b.empty())return 0;
-	int n=a.size(),m=b.size(),k=(n+62)/63;
+	int n=a.size(),k=(n+62)/63;
 	V<ull>f(k);
 	char mn=*min_element(ALL(a)),mx=*max_element(ALL(a));
 	V<V<ull>>g(mx-mn+1,V<ull>(k));
@@ -20,7 +20,7 @@ inline int lcs(const string &a,const string &b){
 template<class T>
 inline int lcs(const V<T> &a,const V<T> &b){
 	if(a.empty()||b.empty())return 0;
-	int n=a.size(),m=b.size(),k=(n+62)/63;
+	int n=a.size(),k=(n+62)/63;
 	disc<T>d(a);
 	V<ull>f(k);
 	V<V<ull>>g(d.size(),V<ull>(k));
@@ -41,13 +41,8 @@ inline int lcs(const V<T> &a,const V<T> &b){
 
 struct subseq_table{
 	V<V<int>>nxt;
-	inline subseq_table(const string &v){
-		int n=v.size();
-		V<V<int>>(128).swap(nxt);
-		For(i,n){
-			assert(v[i]>=0&&v[i]<128);
-			nxt[v[i]].pb(i);
-		}
+	inline subseq_table(const string &v):nxt(128){
+		For(i,v.size())nxt[v[i]].pb(i);
 	}
 	inline int lcp(const string &v){
 		int nw=0,ret=0;
@@ -69,10 +64,9 @@ struct subseq_Table{
 	genID<T,container>g;
 	V<V<int>>nxt;
 	inline subseq_Table(const V<T> &v){
-		int n=v.size();
-		For(i,n){
+		For(i,v.size()){
 			int k=g.get_id(v[i]);
-			if(k>=nxt.size())nxt.pb(V<int>());
+			if(k==nxt.size())nxt.pb({});
 			nxt[k].pb(i);
 		}
 	}
@@ -95,9 +89,7 @@ struct subseq_Table{
 struct manacher{
     int n;
     V<int>p;
-    inline manacher(const string &s){
-        n=s.size();
-        p.assign(n<<1|1,1);
+    inline manacher(const string &s):n(s.size()),p(n<<1|1,1){
         string t(n<<1|1,'#');
         For(i,n)t[i<<1|1]=s[i];
         for(int i=0,mid=-1,mx=-1;i<p.size();++i){

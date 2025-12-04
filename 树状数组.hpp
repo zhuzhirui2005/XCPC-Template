@@ -3,12 +3,7 @@ struct BIT{
     // d-indexed [-d+1,n]->[1,n+d]
     V<T>c1,c2;
     int d,n;
-    inline void resize(int n_,int d_=1){
-        d=d_,n=n_;
-        V<T>(n+d+1).swap(c1);
-        V<T>(n+d+1).swap(c2);
-    }
-    inline BIT(int n=0,int d=1){resize(n,d);}
+    inline BIT(int n=0,int d=1):n(n),d(d),c1(n+d+1),c2(n+d+1){}
     inline void add(int l,int r,const T &v){
         if(l>r)return;
         l+=d,assert(0<l),assert(l<=n+d);
@@ -34,11 +29,7 @@ struct BIT1{
     // d-indexed [-d+1,n]->[1,n+d]
     V<T>c;
     int d,n;
-    inline void resize(int n_,int d_=1){
-        d=d_,n=n_;
-        V<T>(n+d+1).swap(c);
-    }
-    inline BIT1(int n=0,int d=1){resize(n,d);}
+    inline BIT1(int n=0,int d=1):n(n),d(d),c(n+d+1){}
     inline void add(int k,const T &v){
         k+=d;
         assert(1<=k),assert(k<=n+d);
@@ -58,11 +49,7 @@ struct BIT2{
     // d-indexed [-d+1,n]->[1,n+d]
     V<T>c;
     int d,n;
-    inline void resize(int n_,int d_=1){
-        d=d_,n=n_;
-        V<T>(n+d+1).swap(c);
-    }
-    inline BIT2(int n=0,int d=1){resize(n,d);}
+    inline BIT2(int n=0,int d=1):n(n),d(d),c(n+d+1){}
     inline void add(int k,const T &v){
         k+=d;
         assert(1<=k),assert(k<=n+d);
@@ -82,11 +69,7 @@ struct BIT3{
     // d-indexed [-d+1,n]->[1,n+d]
     V<T>c;
     int d,n;
-    inline void resize(int n_,int d_=1){
-        d=d_,n=n_;
-        V<T>(n+d+1).swap(c);
-    }
-    inline BIT3(int n=0,int d=1){resize(n,d);}
+    inline BIT3(int n=0,int d=1):n(n),d(d),c(n+d+1){}
     inline void add(int k,const T &v){
         k+=d;
         assert(1<=k),assert(k<=n+d);
@@ -106,11 +89,7 @@ struct BIT4{
     // d-indexed [-d+1,n]->[1,n+d]
     V<T>c;
     int d,n;
-    inline void resize(int n_,int d_=1){
-        d=d_,n=n_;
-        V<T>(n+d+1).swap(c);
-    }
-    inline BIT4(int n=0,int d=1){resize(n,d);}
+    inline BIT4(int n=0,int d=1):n(n),d(d),c(n+d+1){}
     inline void add(int k,const T &v){
         k+=d;
         assert(1<=k),assert(k<=n+d);

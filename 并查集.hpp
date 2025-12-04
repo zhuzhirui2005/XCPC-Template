@@ -1,7 +1,7 @@
 struct dsu{
+	int n;
     V<int>fa;
-    inline void resize(int n){V<int>(n,-1).swap(fa);}
-    inline dsu(int n=0){resize(n);}
+    inline dsu(int n=0):n(n),fa(n,-1){}
     int find(int k){return fa[k]<0?k:fa[k]=find(fa[k]);}
     inline bool merge(int x,int y){
 		x=find(x),y=find(y);
@@ -15,11 +15,13 @@ struct dsu{
 struct range_dsu{
 	V<V<int>>fa;
 	int lg,n;
-    inline void resize(int _n){
-		V<V<int>>(lg=((n=_n)?__lg(n):-1)+1).swap(fa);
-		For(i,lg)fa[i].resize(n-(1<<i)+1,-1);
+    inline range_dsu(int n=0):n(n){
+		if(n){
+			fa.resize(lg=__lg(n)+1);
+			For(i,lg)fa[i].resize(n-(1<<i)+1,-1);
+		}
+		else lg=0;
 	}
-    inline range_dsu(int _n=0){resize(_n);}
     int find(int d,int k){return fa[d][k]<0?k:fa[d][k]=find(d,fa[d][k]);}
     inline void merge(int d,int x,int y){
 		x=find(d,x),y=find(d,y);

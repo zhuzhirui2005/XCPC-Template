@@ -24,18 +24,16 @@ inline V<pii> cart_son(const V<T> &v,function<bool(T,T)>cmp=[](T x,T y){return x
 }
 
 struct lca_table{
-	int n,rt;
+	int n;
 	V<V<int>>to;
-	inline void resize(int n_){V<V<int>>(n=n_).swap(to);}
-	inline lca_table(int n_=0){resize(n_);}
+	inline lca_table(int n=0):n(n),to(n){}
 	inline void add_edge(int x,int y){
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
 		to[x].pb(y),to[y].pb(x);
 	}
 	inline lca_table(const V<V<int>>&to_){n=(to=to_).size();init();}
 	V<int>dep,fa,siz,son,top;
-	inline void init(int _rt=0){
-		rt=_rt;
+	inline void init(int rt=0){
 		V<int>(n).swap(dep),V<int>(n).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
 		function<void(int,int)>dfs1=[&](int p,int f){
 			if(~f)dep[p]=dep[f]+1;
@@ -71,18 +69,16 @@ struct lca_table{
 };
 
 struct tree_chain{
-	int n,rt;
+	int n;
 	V<V<int>>to;
-	inline void resize(int n_){V<V<int>>(n=n_).swap(to);}
-	inline tree_chain(int n_=0){resize(n_);}
+	inline tree_chain(int n=0):n(n),to(n){}
 	inline void add_edge(int x,int y){
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
 		to[x].pb(y),to[y].pb(x);
 	}
 	inline tree_chain(const V<V<int>>&to_){n=(to=to_).size();init();}
 	V<int>dep,fa,rev,seg,siz,son,top;
-	inline void init(int _rt=0){
-		rt=_rt;
+	inline void init(int rt=0){
 		V<int>(n).swap(dep),V<int>(n).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
 		function<void(int,int)>dfs1=[&](int p,int f){
 			if(~f)dep[p]=dep[f]+1;
@@ -170,18 +166,17 @@ inline void virt_tree(V<int> &p,const tree_chain &tc,V<V<int>> &to){
     while(st.size()>1)add_edge(st[st.size()-2],st.back()),st.qb();
 }
 
-struct lca_table_multi{
+struct lca_table_forest{
 	int n;
 	V<V<int>>to;
-	inline void resize(int n_){V<V<int>>(n=n_).swap(to);}
-	inline lca_table_multi(int n_=0){resize(n_);}
+	inline lca_table_forest(int n=0):n(n),to(n){}
 	inline void add_edge(int x,int y){
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
 		to[x].pb(y),to[y].pb(x);
 	}
-	inline lca_table_multi(const V<V<int>>&to_){n=(to=to_).size();init();}
+	inline lca_table_forest(const V<V<int>>&to_){n=(to=to_).size();init();}
 	V<int>dep,fa,id,siz,son,top;
-	inline void init(){
+	inline void init(){ // 暂时不允许指定各子树的根
 		V<int>(n).swap(dep),V<int>(n,-1).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
 		function<void(int,int)>dfs1=[&](int p,int f){
 			if(~f)dep[p]=dep[f]+1;
@@ -216,18 +211,17 @@ struct lca_table_multi{
 	}
 };
 
-struct tree_chain_multi{
+struct tree_chain_forest{
 	int n;
 	V<V<int>>to;
-	inline void resize(int n_){V<V<int>>(n=n_).swap(to);}
-	inline tree_chain_multi(int n_=0){resize(n_);}
+	inline tree_chain_forest(int n=0):n(n),to(n){}
 	inline void add_edge(int x,int y){
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
 		to[x].pb(y),to[y].pb(x);
 	}
-	inline tree_chain_multi(const V<V<int>>&to_){n=(to=to_).size();init();}
+	inline tree_chain_forest(const V<V<int>>&to_){n=(to=to_).size();init();}
 	V<int>dep,fa,id,rev,seg,siz,son,top;
-	inline void init(int rt=0){
+	inline void init(){ // 暂时不允许指定各子树的根
 		V<int>(n).swap(dep),V<int>(n).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
 		function<void(int,int)>dfs1=[&](int p,int f){
 			if(~f)dep[p]=dep[f]+1;

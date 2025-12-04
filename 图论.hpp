@@ -308,9 +308,8 @@ struct range_2sat{
 	V<V<int>>to;
 	inline int idx(int l,int r){return (l+r|l!=r)>>1;}
 	#define p idx(l,r)
-	inline void resize(int n_){
-		n=n_;
-		V<V<int>>((n<<1)+(n-1<<2)).swap(to);
+	inline range_2sat(){}
+	inline range_2sat(int n):n(n),to((n<<1)+(n-1<<2)){
 		function<int(int,int,int)>build_dw=[&](int l,int r,int k){
 			if(l==r)return (k&1)*n+l;
 	        int mid=l+r>>1;
@@ -327,9 +326,7 @@ struct range_2sat{
 			return (n<<1)+k*(n-1)+p;
 		};
 		build_up(0,n-1,2),build_up(0,n-1,3);
-	}
-	inline range_2sat(){}
-	inline range_2sat(int n_){resize(n_);}
+    }
 	inline V<int> range_dw(int ql,int qr,int k){
 		V<int>ret;
 		function<void(int,int)>dfs=[&](int l,int r){

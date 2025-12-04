@@ -2,8 +2,7 @@ template<class T,T e,T(*merge)(T,T)>
 struct SGT{
     int n;
     V<T>t;
-    inline void resize(int n_){V<T>((n=n_)<<2,e).swap(t);}
-    inline SGT(int n_=0){resize(n_);}
+    inline SGT(int n=0):n(n),t(n<<2,e){}
     inline void push_up(int p){t[p]=merge(t[p<<1],t[p<<1|1]);}
     void build(int p,int l,int r,const V<T>&v){
         if(l==r){t[p]=v[l];return;}
@@ -52,8 +51,7 @@ template<class T,T e>
 struct SGTlazy{
     int n;
     V<T>t,tag;
-    inline void resize(int n_){n=n_,V<T>(n<<2,e).swap(t),V<T>(n<<2,e).swap(tag);}
-    inline SGTlazy(int n_=0){resize(n_);}
+    inline SGTlazy(int n=0):n(n),t(n<<2,e),tag(n<<2,e){}
     inline void push_up(int p){}
     inline void add_tag(int p,const T &v){}
     inline void push_down(int p){add_tag(p<<1,tag[p]),add_tag(p<<1|1,tag[p]),tag[p]=e;}
@@ -135,8 +133,7 @@ struct SGT_2n{
     #define p idx(l,r)
 	#define ls idx(l,mid)
 	#define rs idx(mid+1,r)
-    inline void resize(int n_){n=n_,V<T>(n<<1).swap(t),V<T>(n<<1).swap(tag);}
-    inline SGT_2n(int n_=0){resize(n_);}
+    inline SGT_2n(int n=0):n(n),t(n<<1),tag(n<<1){}
     void build(int l,int r,const V<T>&v){
         if(l==r){t[p]=v[l];return;}
         int mid=l+r>>1;

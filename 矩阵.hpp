@@ -78,21 +78,16 @@ template<class T>
 struct dis_matrix{
 	int n,m;
 	V<V<T>>a;
-	inline dis_matrix(int _n=0,int _m=0,T v=T()):n(_n),m(_m){
-		assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));
-		V<V<T>>(n,V<T>(m,v)).swap(a);
-	};
+	inline dis_matrix(int n=0,int m=0,T v=T()):n(n),m(m),a(n,V<T>(m,v)){static_assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));};
 	inline V<T> &operator[](int idx){return a[idx];}
 	inline const V<T> &operator[](int idx)const{return a[idx];}
 	inline dis_matrix operator*(const dis_matrix &rhs){
 		assert(m==rhs.n);
-		dis_matrix ret(n,rhs.m,is_same<T,int>::value?inf:infl);
 		dis_matrix ret(n,rhs.m,is_same_v<T,int>?inf:infl);
 		For(i,n)For(j,rhs.m)For(k,m)ckmin(ret[i][j],a[i][k]+rhs[k][j]);
 		return ret;
 	}
 	inline dis_matrix pow(ull k){
-		dis_matrix base=*this,ret(n,n,is_same<T,int>::value?inf:infl);
 		dis_matrix base=*this,ret(n,n,is_same_v<T,int>?inf:infl);
 		for(;k;k>>=1,base=base*base)if(k&1)ret=ret*base;
 		return ret;

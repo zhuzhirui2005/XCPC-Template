@@ -1,12 +1,10 @@
 template<class T,int n>
 struct LB{
-	V<T>d;
 	int cnt,failed;
-	inline void clear(){cnt=failed=0,V<T>(n).swap(d);}
-	inline LB(){
-		assert(n>0);
-		assert(n<=(is_same<T,int>::value?31:is_same<T,unsigned>::value?32:is_same<T,ll>::value?63:is_same<T,ull>::value?64:-1));
-		clear();
+	V<T>d;
+	inline LB():cnt(0),failed(0),d(n){
+		static_assert(n>0);
+		static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
 	}
 	inline bool insert(T k){
 		Rep(i,n)if(k>>i&1){
@@ -68,11 +66,9 @@ template<class T,int n>
 struct LB_ts{ // timestamp
 	V<T>d;
 	V<int>t;
-	inline void clear(){V<T>(n).swap(d),V<int>(n).swap(t);}
-	inline LB_ts(){
-		assert(n>0);
-		assert(n<=(is_same<T,int>::value?31:is_same<T,unsigned>::value?32:is_same<T,ll>::value?63:is_same<T,ull>::value?64:-1));
-		clear();
+	inline LB_ts():d(n),t(n){
+		static_assert(n>0);
+		static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
 	}
 	inline bool insert(T k,int tm){
 		Rep(i,n)if(k>>i&1){
