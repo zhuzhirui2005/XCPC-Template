@@ -78,7 +78,7 @@ template<class T>
 struct dis_matrix{
 	int n,m;
 	V<V<T>>a;
-	inline dis_matrix(int n=0,int m=0,T v=T()):n(n),m(m),a(n,V<T>(m,v)){static_assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));};
+	inline dis_matrix(int n=0,int m=0,T v=T()):n(n),m(m),a(n,V<T>(m,v)){static_assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));}
 	inline V<T> &operator[](int idx){return a[idx];}
 	inline const V<T> &operator[](int idx)const{return a[idx];}
 	inline dis_matrix operator*(const dis_matrix &rhs){
