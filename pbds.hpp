@@ -91,7 +91,7 @@ struct rbt{
 	int cnt;
 	typedef tree<pti,null_type,less<pti>,rb_tree_tag,node_update> rbt_t;
 	rbt_t t;
-	inline rbt(){cnt=0;}
+	inline rbt():cnt(0){}
 	inline void clear(){cnt=0,rbt_t().swap(t);}
 	inline typename rbt_t::iterator begin(){return t.begin();}
 	inline typename rbt_t::iterator end(){return t.end();}
@@ -128,7 +128,7 @@ inline V<ll> dijkstra(int n,int s,const V<V<pii>> &to){
         int p=q.top().se;q.pop();
         for(const pii &i:to[p])
             if(ckmin(dis[i.fi],dis[p]+i.se)){
-				if(it[i.fi]!=NULL)q.modify(it[i.fi],{dis[i.fi],i.fi});
+				if(it[i.fi]!=nullptr)q.modify(it[i.fi],{dis[i.fi],i.fi});
                 else it[i.fi]=q.push({dis[i.fi],i.fi});
             }
     }

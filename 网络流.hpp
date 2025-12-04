@@ -7,48 +7,49 @@ struct maxflow{
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
 		hd[x].pb(e.size()),e.eb(y,z),hd[y].pb(e.size()),e.eb(x,0);
 	}
-	inline maxflow(int _n=0,int _S=-1,int _T=-1){
-		V<V<int>>(n=_n).swap(hd);
-		S=_S,T=_T;
-	}
-    template<class U>
-	inline maxflow(const V<V<pair<int,U>>> &to,int _S=-1,int _T=-1){
-        V<V<int>>(n=to.size()).swap(hd);
-		For(i,n)for(const auto &[j,k]:to[i])add_edge(i,j,k);
-		S=_S,T=_T;
-	}
+	inline maxflow(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
+    template<class U>inline maxflow(const V<V<pair<int,U>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const auto &[j,k]:to[i])add_edge(i,j,k);}
 	inline ll dinic(int s=-1,int t=-1){
         if(!~s)s=S;
         if(!~t)t=T;
 		assert(~s),assert(~t);
+        queue<int>q;
 		auto bfs=[&](){
 			dep.assign(n,0);
 			dep[s]=1;
-			queue<int>q;
 			q.push(s);
 			while(q.size()){
 				int p=q.front();q.pop();
-				for(int i:hd[p])if(e[i].se&&!dep[e[i].fi])dep[e[i].fi]=dep[p]+1,q.push(e[i].fi);
+				for(int i:hd[p]){
+                    const auto &[j,k]=e[i];
+                    if(k&&!dep[j])dep[j]=dep[p]+1,q.push(j);
+                }
 			}
 			return dep[t];
 		};
-		function<ll(int,ll)>dfs=[&](int p,ll lim){
+        V<int>cur;
+		auto dfs=[&](auto &&self,int p,ll lim){
 			if(p==t)return lim;
 			ll sum=0;
-			for(int i:hd[p])if(e[i].se&&dep[p]+1==dep[e[i].fi]){
-				ll f=dfs(e[i].fi,min((ll)e[i].se,lim-sum));
-				e[i].se-=f,e[i^1].se+=f;
-				if((sum+=f)==lim)break;
-			}
+			for(int &idx=cur[p];idx<hd[p].size();++idx){
+                int i=hd[p][idx];
+                auto &[j,k]=e[i];
+                if(k&&dep[p]+1==dep[j]){
+                    ll f=self(self,j,min((ll)k,lim-sum));
+                    k-=f,e[i^1].se+=f;
+                    if((sum+=f)==lim)break;
+                }
+            }
 			if(!sum)dep[p]=0;
 			return sum;
 		};
 		ll ret=0;
-		while(bfs())ret+=dfs(s,infl);
+		while(bfs())cur.assign(n,0),ret+=dfs(dfs,s,infl);
 		return ret;
 	}
     inline V<V<pil>> gomoryhu(){
-        V<int>f(e.size()),id(n),tmp(n);
+        V<ll>f(e.size());
+        V<int>id(n),tmp(n);
         iota(ALL(id),0);
         shuffle(ALL(id),mt19937(time(0)));
         V<V<pil>>to(n);
@@ -106,11 +107,12 @@ inline pair<ll,V<int>> boundflow(int n,const V<array<int,4>> &e,int tp=0,int S=-
     if(tp&2)ckmax(f-=mf.dinic(T,S),0ll); // 流量平衡时残量网络等于原网络，可能导致答案为负
     V<int>p(n),ret;
     ret.reserve(e.size());
-    for(const auto &[u,v,l,r]:e)ret.pb(l+mf.e[mf.hd[v][p[v]++]].se),++p[u];
+    for(const auto &[u,v,l,r]:e)ret.pb(l+mf.e[mf.hd[v][u==v?++p[v]:p[v]++]].se),++p[u];
     return {f,ret};
 }
 
 struct mincost{
+    V<ll>dis;
 	V<array<int,3>>e;
 	V<V<int>>hd;
 	int n,S,T;
@@ -118,15 +120,8 @@ struct mincost{
 		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
 		hd[x].pb(e.size()),e.pb({y,z,w}),hd[y].pb(e.size()),e.pb({x,0,-w});
 	}
-	inline mincost(int _n=0,int _S=-1,int _T=-1){
-		V<V<int>>(n=_n).swap(hd);
-		S=_S,T=_T;
-	}
-	inline mincost(const V<V<array<int,3>>> &to,int _S=-1,int _T=-1){
-        V<V<int>>(n=to.size()).swap(hd);
-		For(i,n)for(const array<int,3> &j:to[i])add_edge(i,j[0],j[1],j[2]);
-		S=_S,T=_T;
-	}
+	inline mincost(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
+	inline mincost(const V<V<array<int,3>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const array<int,3> &j:to[i])add_edge(i,j[0],j[1],j[2]);}
     typedef pair<ll,ll> pll;
 	inline pll primal_dual(){
 		assert(S!=-1),assert(T!=-1);
@@ -140,25 +135,30 @@ struct mincost{
             while(q.size()){
                 int p=q.front();q.pop();
                 vis[p]=false;
-                for(int i:hd[p])if(e[i][1]&&ckmin(h[e[i][0]],h[p]+e[i][2])&&!vis[e[i][0]])q.push(e[i][0]),vis[e[i][0]]=true;
+                for(int i:hd[p]){
+                    const auto &[j,k,l]=e[i];
+                    if(k&&ckmin(h[j],h[p]+l)&&!vis[j])q.push(j),vis[j]=true;
+                }
             }
         };
         spfa();
-        V<ll>dis;
         V<pii>pre(n);
+        priority_queue<pli>q;
 		auto dijkstra=[&](){
-			V<ll>(n,infl).swap(dis);
+			dis.assign(n,infl);
             dis[S]=0;
-			priority_queue<pli>q;
             q.emplace(0,S);
-            V<bool>vis(n);
+            vis.assign(n,false);
 			while(q.size()){
 				int p=q.top().se;q.pop();
                 if(vis[p])continue;
                 vis[p]=true;
-				for(int i:hd[p])if(e[i][1]&&ckmin(dis[e[i][0]],dis[p]+e[i][2]+h[p]-h[e[i][0]])){
-                    pre[e[i][0]]={p,i};
-                    if(!vis[e[i][0]])q.emplace(-dis[e[i][0]],e[i][0]);
+				for(int i:hd[p]){
+                    const auto &[j,k,l]=e[i];
+                    if(k&&ckmin(dis[j],dis[p]+l+h[p]-h[j])){
+                        pre[j]={p,i};
+                        if(!vis[j])q.emplace(-dis[j],j);
+                    }
                 }
 			}
 			return dis[T]!=infl;
@@ -175,47 +175,103 @@ struct mincost{
 	}
     inline pll dinic(){
         assert(S!=-1),assert(T!=-1);
-        V<int>cur(n);
-        V<ll>dis;
-        V<V<int>>tmp=hd;
+        queue<int>q;
         V<bool>vis(n);
         auto spfa=[&](){
             dis.assign(n,infl);
             dis[S]=0;
-            hd=tmp;
-            queue<int>q;
             q.push(S);
             while(q.size()){
                 int p=q.front();q.pop();
                 vis[p]=false;
-                for(int i:hd[p])if(e[i][1]&&ckmin(dis[e[i][0]],dis[p]+e[i][2])&&!vis[e[i][0]])q.push(e[i][0]),vis[e[i][0]]=true;
+                for(int i:hd[p]){
+                    const auto &[j,k,l]=e[i];
+                    if(k&&ckmin(dis[j],dis[p]+l)&&!vis[j])q.push(j),vis[j]=true;
+                }
             }
             return dis[T]<infl;
         };
+        V<int>cur;
         ll ret1=0,ret2=0;
         auto dfs=[&](auto &&self,int p,ll f)->ll{
             if(p==T)return f;
             vis[p]=true;
             ll ret=0;
-            while(hd[p].size()){
-                int i=hd[p].back();
-                if(!vis[e[i][0]]&&e[i][1]&&dis[e[i][0]]==dis[p]+e[i][2]){
-                    ll d=self(self,e[i][0],min((ll)e[i][1],f-ret));
+            for(int &idx=cur[p];idx<hd[p].size();++idx){
+                int i=hd[p][idx];
+                auto &[j,k,l]=e[i];
+                if(!vis[j]&&k&&dis[j]==dis[p]+l){
+                    ll d=self(self,j,min((ll)k,f-ret));
                     if(d){
-                        ret+=d,ret2+=d*e[i][2];
-                        e[i][1]-=d,e[i^1][1]+=d;
+                        ret+=d,ret2+=d*l;
+                        k-=d,e[i^1][1]+=d;
                         if(ret==f)break;
                     }
                 }
-                hd[p].qb();
             }
             vis[p]=false;
             return ret;
         };
         while(spfa()){
+            cur.assign(n,0);
             ll d;
             while(d=dfs(dfs,S,infl))ret1+=d;
         }
         return {ret1,ret2};
+    }
+};
+
+struct maxmatch{
+    V<int>dep,mch;
+    int m,n;
+    V<V<int>>to;
+    inline void add_edge(int x,int y){
+        assert(0<=x),assert(x<n),assert(0<=y),assert(y<m);
+        to[x].pb(y);
+    }
+    inline maxmatch(int n=0,int m=0):n(n),m(m),mch(n+m,-1),to(n){}
+    inline maxmatch(const V<V<int>> &to):n(to.size()),m(0),to(to){
+        For(i,n)for(int j:to[i])assert(j>=0),ckmax(m,j);
+        ++m;
+        mch.assign(n+m,-1);
+    }
+    inline int hopcroft_karp(){
+        dep.resize(n);
+        auto bfs=[&](){
+            queue<int>q;
+            For(i,n){
+                if(~mch[i])dep[i]=0;
+                else dep[i]=1,q.push(i);
+            }
+            int mn=inf;
+            while(q.size()){
+                int p=q.front();q.pop();
+                if(dep[p]>=mn)break;
+                for(int i:to[p]){
+                    int j=mch[n+i];
+                    if(!~j)mn=dep[p]+1;
+                    else if(!dep[j])dep[j]=dep[p]+1,q.push(j);
+                }
+            }
+            return mn<inf;
+        };
+        V<int>cur;
+        auto dfs=[&](auto &&self,int p)->bool{
+            for(int &idx=cur[p];idx<to[p].size();++idx){
+                int i=to[p][idx],&j=mch[n+i];
+                if(!~j||(dep[j]==dep[p]+1&&self(self,j))){
+                    mch[p]=n+i,j=p;
+                    return true;
+                }
+            }
+            dep[p]=0;
+            return false;
+        };
+        int cnt=0;
+        while(bfs()){
+            cur.assign(n,0);
+            For(i,n)if(!~mch[i]&&dfs(dfs,i))++cnt;
+        }
+        return cnt;
     }
 };

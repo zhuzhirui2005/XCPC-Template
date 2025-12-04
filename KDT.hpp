@@ -2,7 +2,7 @@ template<int n>
 struct KDT{
     array<int,n>mn,mx,t;
     KDT *ls,*rs;
-    inline KDT(const array<int,n> &arr={}):mn(arr),mx(arr),t(arr),ls(NULL),rs(NULL){}
+    inline KDT(const array<int,n> &arr={}):mn(arr),mx(arr),t(arr),ls(nullptr),rs(nullptr){}
     inline void build(V<array<int,n>> &a,int l,int r,int d){
         int mid=l+r>>1;
         nth_element(a.begin()+l,a.begin()+mid,a.begin()+r+1,[&](const auto &x,const auto &y){return x[d]<y[d];});

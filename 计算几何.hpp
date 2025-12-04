@@ -2,7 +2,7 @@ const double eps=1e-8,PI=acos(-1.);
 
 struct vec2D{
     double x,y;
-    inline vec2D(double x_=0,double y_=0):x(x_),y(y_){}
+    inline vec2D(double x=0.,double y=0.):x(x),y(y){}
     inline vec2D operator+(const vec2D &rhs){return {x+rhs.x,y+rhs.y};}
     inline vec2D operator-(const vec2D &rhs){return {x-rhs.x,y-rhs.y};}
     inline vec2D operator*(double k){return {x*k,y*k};}
@@ -44,7 +44,7 @@ struct vec2D{
 
 struct vec2d{
     ll x,y;
-    inline vec2d(ll x_=0,ll y_=0):x(x_),y(y_){}
+    inline vec2d(ll x=0,ll y=0):x(x),y(y){}
     inline vec2d operator+(const vec2d &rhs){return {x+rhs.x,y+rhs.y};}
     inline vec2d operator-(const vec2d &rhs){return {x-rhs.x,y-rhs.y};}
     inline vec2d operator*(ll k){return {x*k,y*k};}
@@ -200,7 +200,7 @@ struct convex{
 
 struct vec3D{
     double x,y,z;
-    inline vec3D(double x_=0.,double y_=0.,double z_=0.):x(x_),y(y_),z(z_){}
+    inline vec3D(double x=0.,double y=0.,double z=0.):x(x),y(y),z(z){}
     inline vec3D operator+(const vec3D &rhs){return {x+rhs.x,y+rhs.y,z+rhs.z};}
     inline vec3D operator-(const vec3D &rhs){return {x-rhs.x,y-rhs.y,z-rhs.z};}
     inline vec3D cross(const vec3D &rhs){return {y*rhs.z-z*rhs.y,z*rhs.x-x*rhs.z,x*rhs.y-y*rhs.x};}

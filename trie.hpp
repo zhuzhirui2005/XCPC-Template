@@ -1,7 +1,7 @@
 struct trie{
     int siz;
     trie *son[2];
-    inline trie(){siz=0,son[0]=son[1]=NULL;}
+    inline trie():siz(0),son{nullptr,nullptr}{}
 };
 void insert(int dep,trie *p,int k){
     ++p->siz;
@@ -24,11 +24,11 @@ void insert(int dep,trie *p1,trie *p2,int k){
 	int nxt=k>>dep&1;
 	if(p1)p2->son[nxt^1]=p1->son[nxt^1];
 	p2->son[nxt]=new trie();
-	insert(dep-1,p1?p1->son[nxt]:NULL,p2->son[nxt],k);
+	insert(dep-1,p1?p1->son[nxt]:nullptr,p2->son[nxt],k);
 }
 int query(int dep,trie *p1,trie *p2,int k){
 	if(dep<0)return 0;
 	int nxt=k>>dep&1;
-	if(p2->son[nxt^1]&&(!p1||!p1->son[nxt^1]||p2->son[nxt^1]->siz>p1->son[nxt^1]->siz))return query(dep-1,p1?p1->son[nxt^1]:NULL,p2->son[nxt^1],k)|(1<<dep);
-	return query(dep-1,p1?p1->son[nxt]:NULL,p2->son[nxt],k);
+	if(p2->son[nxt^1]&&(!p1||!p1->son[nxt^1]||p2->son[nxt^1]->siz>p1->son[nxt^1]->siz))return query(dep-1,p1?p1->son[nxt^1]:nullptr,p2->son[nxt^1],k)|(1<<dep);
+    return query(dep-1,p1?p1->son[nxt]:nullptr,p2->son[nxt],k);
 }
