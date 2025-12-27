@@ -14,24 +14,24 @@ inline int area_cnt(const V<V<T>>& v,const T& goal){
 }
 
 inline array<V<V<int>>,4> find_dir(const V<V<int>>& grid){
-	// Used "array<V<V<int>>,4>" in order to use "auto [u,d,l,r]=find(grid);"
-	int n=grid.size(),m=grid[0].size();
-	V<V<int>>u(n,V<int>(m)),d(n,V<int>(m)),l(n,V<int>(m)),r(n,V<int>(m));
-	For(i,n)
-	    For(j,m)
-	        if(grid[i][j]){
-	            u[i][j]=(i?u[i-1][j]:0)+1;
-	            l[i][j]=(j?l[i][j-1]:0)+1;
-	        }
-	Rep(i,n)
-	    Rep(j,m)
-	        if(grid[i][j]){
-	            d[i][j]=(i+1<n?d[i+1][j]:0)+1;
-	            r[i][j]=(j+1<m?r[i][j+1]:0)+1;
-	        }
-	// Up   , Down , Left, Right
-	// North, South, West, East
-	return {u,d,l,r};
+    // Used "array<V<V<int>>,4>" in order to use "auto [u,d,l,r]=find(grid);"
+    int n=grid.size(),m=grid[0].size();
+    V<V<int>>u(n,V<int>(m)),d(n,V<int>(m)),l(n,V<int>(m)),r(n,V<int>(m));
+    For(i,n)
+        For(j,m)
+            if(grid[i][j]){
+                u[i][j]=(i?u[i-1][j]:0)+1;
+                l[i][j]=(j?l[i][j-1]:0)+1;
+            }
+    Rep(i,n)
+        Rep(j,m)
+            if(grid[i][j]){
+                d[i][j]=(i+1<n?d[i+1][j]:0)+1;
+                r[i][j]=(j+1<m?r[i][j+1]:0)+1;
+            }
+    // Up   , Down , Left, Right
+    // North, South, West, East
+    return {u,d,l,r};
 }
 
 template<class T>
@@ -59,15 +59,15 @@ struct ListNode {
      ListNode(int x, ListNode *next) : val(x), next(next) {}
 };
 inline V<int> ltov(ListNode *hd){
-	V<int>ret;
-	while(hd)ret.pb(hd->val),hd=hd->next;
-	return ret;
+    V<int>ret;
+    while(hd)ret.pb(hd->val),hd=hd->next;
+    return ret;
 }
 inline ListNode* vtol(const V<int>& v){
-	if(v.empty())return NULL;
-	ListNode *hd=new ListNode(v[0]),*p=hd;
-	FOR(i,1,v.size())p->next=new ListNode(v[i]),p=p->next;
-	return hd;
+    if(v.empty())return NULL;
+    ListNode *hd=new ListNode(v[0]),*p=hd;
+    FOR(i,1,v.size())p->next=new ListNode(v[i]),p=p->next;
+    return hd;
 }
 
 template<class T1,class T2>
@@ -111,38 +111,38 @@ inline T qry2d(V<V<T>> &v,int l1,int l2,int r1,int r2){
 }
 
 inline ll contor(const V<int> &v){
-	int d=*min_element(ALL(v)),n=v.size();
-	V<bool>vis(n);
-	for(int i:v)vis[i-d]=true;
-	if(any_of(ALL(vis),[](bool b){return !b;}))return -1;
-	V<ll>fac(n);
-	fac[0]=1;
-	BIT3<int>t(n);
-	FOR(i,1,n+1){
-		if(i<n)fac[i]=fac[i-1]*i;
-		++t.c[i];
-		if(i+(i&-i)<=n)t.c[i+(i&-i)]+=t.c[i];
-	}
-	ll ret=0;
-	For(i,n){
-		t.add(v[i]-d,-1);
-		ret+=fac[n-i-1]*t.query(v[i]-d);
-	}
-	return ret;
+    int d=*min_element(ALL(v)),n=v.size();
+    V<bool>vis(n);
+    for(int i:v)vis[i-d]=true;
+    if(any_of(ALL(vis),[](bool b){return !b;}))return -1;
+    V<ll>fac(n);
+    fac[0]=1;
+    BIT3<int>t(n);
+    FOR(i,1,n+1){
+        if(i<n)fac[i]=fac[i-1]*i;
+        ++t.c[i];
+        if(i+(i&-i)<=n)t.c[i+(i&-i)]+=t.c[i];
+    }
+    ll ret=0;
+    For(i,n){
+        t.add(v[i]-d,-1);
+        ret+=fac[n-i-1]*t.query(v[i]-d);
+    }
+    return ret;
 }
 
 inline V<int> inv_contor(int n,ll k){
-	V<ll>fac(n+1);
-	fac[0]=1;
-	FOR(i,1,n+1)fac[i]=fac[i-1]*i;
-	if(k>=fac[n])return {-1};
-	V<int>ret(n);
-	V<bool>vis(n);
-	For(i,n){
-		int dgt=k/fac[n-i-1]+1,j=-1;
-		k%=fac[n-i-1];
-		do dgt-=!vis[++j];while(dgt);
-		ret[i]=j,vis[j]=true;
-	}
-	return ret;
+    V<ll>fac(n+1);
+    fac[0]=1;
+    FOR(i,1,n+1)fac[i]=fac[i-1]*i;
+    if(k>=fac[n])return {-1};
+    V<int>ret(n);
+    V<bool>vis(n);
+    For(i,n){
+        int dgt=k/fac[n-i-1]+1,j=-1;
+        k%=fac[n-i-1];
+        do dgt-=!vis[++j];while(dgt);
+        ret[i]=j,vis[j]=true;
+    }
+    return ret;
 }

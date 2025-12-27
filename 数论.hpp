@@ -2,19 +2,19 @@
 
 template<class T>
 T exgcd(const T &a,const T &b,T &x,T &y){
-	if(!b){x=1,y=0;return a;}
-	T g=exgcd(b,a%b,y,x);
-	y-=a/b*x;
-	return g;
+    if(!b){x=1,y=0;return a;}
+    T g=exgcd(b,a%b,y,x);
+    y-=a/b*x;
+    return g;
 };
 template<class T>
 inline T inv_exgcd(T n,T p=mod){
-	// n*inv = 1 (mod p)
-	// n*inv + p*k = 1
-	// a*x + b*y = 1
-	T inv=0,tmp=0;
-	exgcd(n,p,inv,tmp);
-	return inv<0?inv+p:inv;
+    // n*inv = 1 (mod p)
+    // n*inv + p*k = 1
+    // a*x + b*y = 1
+    T inv=0,tmp=0;
+    exgcd(n,p,inv,tmp);
+    return inv<0?inv+p:inv;
 }
 template<class T>
 inline ll exCRT(const V<T> &a,const V<T> &m){
@@ -35,123 +35,123 @@ inline ll exCRT(const V<T> &a,const V<T> &m){
         ll mg=m[i]/g;
         if(x<0)x+=m[i];
         ret+=(x=mul(x,res/g,mg))*md;
-		ret%=(md*=mg);
-		if(ret<0)ret+=md;
-	}
-	return ret;
+        ret%=(md*=mg);
+        if(ret<0)ret+=md;
+    }
+    return ret;
 }
 
 struct comb_table{
-	int n;
-	V<mi>fac,ifac;
-	inline comb_table(int n=0):n(n),fac(n+1),ifac(n+1){init();}
-	inline void init(){
-		fac[0]=1;
-		FOR(i,1,n+1)fac[i]=fac[i-1]*i;
-		ifac[n]=1/fac[n];
-		Rep(i,n)ifac[i]=ifac[i+1]*(i+1);
-	}
-	inline mi C(int x,int y){return x<y||y<0?0:fac[x]*ifac[y]*ifac[x-y];}
+    int n;
+    V<mi>fac,ifac;
+    inline comb_table(int n=0):n(n),fac(n+1),ifac(n+1){init();}
+    inline void init(){
+        fac[0]=1;
+        FOR(i,1,n+1)fac[i]=fac[i-1]*i;
+        ifac[n]=1/fac[n];
+        Rep(i,n)ifac[i]=ifac[i+1]*(i+1);
+    }
+    inline mi C(int x,int y){return x<y||y<0?0:fac[x]*ifac[y]*ifac[x-y];}
 };
 
 struct pri_table{
-	int n;
-	// fac[i] 是 i 的最小质因子
-	V<int>fac,pri;
-	inline pri_table(int n=0):n(n),fac(n+1){init();}
-	inline void init(){
+    int n;
+    // fac[i] 是 i 的最小质因子
+    V<int>fac,pri;
+    inline pri_table(int n=0):n(n),fac(n+1){init();}
+    inline void init(){
         if(n<1)return;
-		fac[1]=1;
-		FOR(i,2,n+1){
-			if(!fac[i])fac[i]=i,pri.pb(i);
-			for(int j:pri){
-				if(i*j>n)break;
-				fac[i*j]=j;
-				if(i%j==0)break;
-			}
-		}
-	}
-	inline bool isp(int k){return k<2?false:fac[k]==k;}
-	inline V<int> div(int k){
-		assert(k<=n);
-		if(k<2)return V<int>();
-		V<int>ret;
-		while(k>1){
-			int f=fac[k];
-			do k/=f;while(k%f==0);
-			ret.pb(f);
-		}
-		return ret;
-	}
+        fac[1]=1;
+        FOR(i,2,n+1){
+            if(!fac[i])fac[i]=i,pri.pb(i);
+            for(int j:pri){
+                if(i*j>n)break;
+                fac[i*j]=j;
+                if(i%j==0)break;
+            }
+        }
+    }
+    inline bool isp(int k){return k<2?false:fac[k]==k;}
+    inline V<int> div(int k){
+        assert(k<=n);
+        if(k<2)return V<int>();
+        V<int>ret;
+        while(k>1){
+            int f=fac[k];
+            do k/=f;while(k%f==0);
+            ret.pb(f);
+        }
+        return ret;
+    }
 };
 
 struct mu_table{
-	int n;
-	V<int>mu,pri;
-	V<bool>vis;
-	inline mu_table(int n=0):n(n),mu(n+1),vis(n+1){init();}
-	inline void init(){
+    int n;
+    V<int>mu,pri;
+    V<bool>vis;
+    inline mu_table(int n=0):n(n),mu(n+1),vis(n+1){init();}
+    inline void init(){
         if(n<1)return;
-		mu[1]=1;
-		FOR(i,2,n+1){
-			if(!vis[i])mu[i]=-1,pri.pb(i);
-			for(int j:pri){
-				if(i*j>n)break;
-				vis[i*j]=true;
-				if(i%j==0)break;
-				mu[i*j]=-mu[i];
-			}
-		}
-	}
-	inline int get(int k){return k<1?0:mu[k];}
+        mu[1]=1;
+        FOR(i,2,n+1){
+            if(!vis[i])mu[i]=-1,pri.pb(i);
+            for(int j:pri){
+                if(i*j>n)break;
+                vis[i*j]=true;
+                if(i%j==0)break;
+                mu[i*j]=-mu[i];
+            }
+        }
+    }
+    inline int get(int k){return k<1?0:mu[k];}
 };
 
 struct phi_table{
-	int n;
-	V<int>phi,pri;
-	inline phi_table(int n=0):n(n),phi(n+1){init();}
-	inline void init(){
+    int n;
+    V<int>phi,pri;
+    inline phi_table(int n=0):n(n),phi(n+1){init();}
+    inline void init(){
         if(n<1)return;
-		phi[1]=1;
-		FOR(i,2,n+1){
-			if(!phi[i])phi[i]=i-1,pri.pb(i);
-			for(int j:pri){
-				if(i*j>n)break;
-				if(i%j==0){
-					phi[i*j]=phi[i]*j;
-					break;
-				}
-				phi[i*j]=phi[i]*(j-1);
-			}
-		}
-	}
-	inline int get(int k){return k<1?0:phi[k];}
+        phi[1]=1;
+        FOR(i,2,n+1){
+            if(!phi[i])phi[i]=i-1,pri.pb(i);
+            for(int j:pri){
+                if(i*j>n)break;
+                if(i%j==0){
+                    phi[i*j]=phi[i]*j;
+                    break;
+                }
+                phi[i*j]=phi[i]*(j-1);
+            }
+        }
+    }
+    inline int get(int k){return k<1?0:phi[k];}
 };
 
 struct d_table{
-	int n;
-	V<int>cnt,d,pri;
-	V<bool>vis;
-	inline d_table(int n=0):n(n),cnt(n+1),d(n+1),vis(n+1){init();}
-	inline void init(){
+    int n;
+    V<int>cnt,d,pri;
+    V<bool>vis;
+    inline d_table(int n=0):n(n),cnt(n+1),d(n+1),vis(n+1){init();}
+    inline void init(){
         if(n<1)return;
-		cnt[1]=d[1]=1;
-		FOR(i,2,n+1){
-			if(!vis[i])cnt[i]=1,d[i]=2,pri.pb(i);
-			for(int j:pri){
-				if(i*j>n)break;
-				vis[i*j]=true;
-				if(i%j==0){
-					int &x=cnt[i*j];
-					x=cnt[i]+1;
-					d[i*j]=d[i]/x*(x+1);
-					break;
-				}
-				cnt[i*j]=1,d[i*j]=d[i]<<1;
-			}
-		}
-	}
-	inline int get(int k){return k<1?0:d[k];}
+        cnt[1]=d[1]=1;
+        FOR(i,2,n+1){
+            if(!vis[i])cnt[i]=1,d[i]=2,pri.pb(i);
+            for(int j:pri){
+                if(i*j>n)break;
+                vis[i*j]=true;
+                if(i%j==0){
+                    int &x=cnt[i*j];
+                    x=cnt[i]+1;
+                    d[i*j]=d[i]/x*(x+1);
+                    break;
+                }
+                cnt[i*j]=1,d[i*j]=d[i]<<1;
+            }
+        }
+    }
+    inline int get(int k){return k<1?0:d[k];}
 };
 
 inline mi lagrange(int l,const V<mi> &y,int x){
@@ -202,58 +202,58 @@ pre_f=sum(phi*id) pre_g=n*(n+1)/2 pre_fg=n*(n+1)*(2n+1)/6
 */
 template<class T,class container>
 T du_sieve(T n,const V<T> &pre_f,const function<T(T)> &pre_g,const function<T(T)> &pre_fg,container &h){
-	if(n<pre_f.size())return pre_f[n];
-	auto it=h.emplace(n,0);
-	T &x=it.fi->se;
-	if(it.se){
-		T pre=pre_g(1);
-		x=pre_fg(n);
-		for(T i=2;i<=n;++i){
-			T div=n/i,j=n/div,cur=pre_g(j);
-			x-=(cur-pre)*du_sieve(div,pre_f,pre_g,pre_fg,h);
-			i=j,pre=cur;
-		}
-	}
-	return x;
+    if(n<pre_f.size())return pre_f[n];
+    auto it=h.emplace(n,0);
+    T &x=it.fi->se;
+    if(it.se){
+        T pre=pre_g(1);
+        x=pre_fg(n);
+        for(T i=2;i<=n;++i){
+            T div=n/i,j=n/div,cur=pre_g(j);
+            x-=(cur-pre)*du_sieve(div,pre_f,pre_g,pre_fg,h);
+            i=j,pre=cur;
+        }
+    }
+    return x;
 }
 
 struct vote_1{
-	pii v;
-	inline vote_1():v(-1,0){}
-	inline vote_1(int id,int cnt=1):v(id,cnt){}
-	inline vote_1 operator+(const vote_1 &rhs){
-		vote_1 ret=*this;
-		if(!~ret.v.fi)ret=rhs;
-		else if(~rhs.v.fi){
-			if(ret.v.fi==rhs.v.fi)ret.v.se+=rhs.v.se;
-			else{
-				if(ret.v.se<rhs.v.se)ret={rhs.v.fi,rhs.v.se-ret.v.se};
-				else ret.v.se-=rhs.v.se;
-			}
-		}
-		return ret;
-	}
+    pii v;
+    inline vote_1():v(-1,0){}
+    inline vote_1(int id,int cnt=1):v(id,cnt){}
+    inline vote_1 operator+(const vote_1 &rhs){
+        vote_1 ret=*this;
+        if(!~ret.v.fi)ret=rhs;
+        else if(~rhs.v.fi){
+            if(ret.v.fi==rhs.v.fi)ret.v.se+=rhs.v.se;
+            else{
+                if(ret.v.se<rhs.v.se)ret={rhs.v.fi,rhs.v.se-ret.v.se};
+                else ret.v.se-=rhs.v.se;
+            }
+        }
+        return ret;
+    }
 };
 
 template<int(*n)()>
 struct vote{
-	V<pii>v;
-	inline vote():v(n(),{-1,0}){}
-	inline vote(int id,int cnt=1):v(n(),{-1,0}){v[0]={id,cnt};}
-	inline vote operator+(const vote<n> &rhs){
-		vote<n>ret=*this;
-		for(pii i:rhs.v){
-			if(!~i.fi)break;
-			for(pii &j:ret.v)if(!~j.fi||i.fi==j.fi){
-				j.fi=i.fi,j.se+=i.se;
-				goto skip;
-			}
-			for(pii &j:ret.v)if(i.se>j.se)swap(i,j);
-			for(pii &j:ret.v)j.se-=i.se;
-			skip:;
-		}
-		return ret;
-	}
+    V<pii>v;
+    inline vote():v(n(),{-1,0}){}
+    inline vote(int id,int cnt=1):v(n(),{-1,0}){v[0]={id,cnt};}
+    inline vote operator+(const vote<n> &rhs){
+        vote<n>ret=*this;
+        for(pii i:rhs.v){
+            if(!~i.fi)break;
+            for(pii &j:ret.v)if(!~j.fi||i.fi==j.fi){
+                j.fi=i.fi,j.se+=i.se;
+                goto skip;
+            }
+            for(pii &j:ret.v)if(i.se>j.se)swap(i,j);
+            for(pii &j:ret.v)j.se-=i.se;
+            skip:;
+        }
+        return ret;
+    }
 };
 
 template<int w2>

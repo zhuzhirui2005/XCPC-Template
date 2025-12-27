@@ -131,8 +131,8 @@ struct SGT_2n{
     V<T>t,tag;
     inline int idx(int l,int r){return l+r|l!=r;}
     #define p idx(l,r)
-	#define ls idx(l,mid)
-	#define rs idx(mid+1,r)
+    #define ls idx(l,mid)
+    #define rs idx(mid+1,r)
     inline SGT_2n(int n=0):n(n),t(n<<1),tag(n<<1){}
     void build(int l,int r,const V<T>&v){
         if(l==r){t[p]=v[l];return;}
