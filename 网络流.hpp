@@ -1,37 +1,37 @@
 struct maxflow{
     V<int>dep;
-	V<pil>e;
-	V<V<int>>hd;
-	int n,S,T;
-	inline void add_edge(int x,int y,ll z){
-		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
-		hd[x].pb(e.size()),e.eb(y,z),hd[y].pb(e.size()),e.eb(x,0);
-	}
-	inline maxflow(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
+    V<pil>e;
+    V<V<int>>hd;
+    int n,S,T;
+    inline void add_edge(int x,int y,ll z){
+        assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
+        hd[x].pb(e.size()),e.eb(y,z),hd[y].pb(e.size()),e.eb(x,0);
+    }
+    inline maxflow(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
     template<class U>inline maxflow(const V<V<pair<int,U>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const auto &[j,k]:to[i])add_edge(i,j,k);}
-	inline ll dinic(int s=-1,int t=-1){
+    inline ll dinic(int s=-1,int t=-1){
         if(!~s)s=S;
         if(!~t)t=T;
-		assert(~s),assert(~t);
+        assert(~s),assert(~t);
         queue<int>q;
-		auto bfs=[&](){
-			dep.assign(n,0);
-			dep[s]=1;
-			q.push(s);
-			while(q.size()){
-				int p=q.front();q.pop();
-				for(int i:hd[p]){
+        auto bfs=[&](){
+            dep.assign(n,0);
+            dep[s]=1;
+            q.push(s);
+            while(q.size()){
+                int p=q.front();q.pop();
+                for(int i:hd[p]){
                     const auto &[j,k]=e[i];
                     if(k&&!dep[j])dep[j]=dep[p]+1,q.push(j);
                 }
-			}
-			return dep[t];
-		};
+            }
+            return dep[t];
+        };
         V<int>cur;
-		auto dfs=[&](auto &&self,int p,ll lim){
-			if(p==t)return lim;
-			ll sum=0;
-			for(int &idx=cur[p];idx<hd[p].size();++idx){
+        auto dfs=[&](auto &&self,int p,ll lim){
+            if(p==t)return lim;
+            ll sum=0;
+            for(int &idx=cur[p];idx<hd[p].size();++idx){
                 int i=hd[p][idx];
                 auto &[j,k]=e[i];
                 if(k&&dep[p]+1==dep[j]){
@@ -40,13 +40,13 @@ struct maxflow{
                     if((sum+=f)==lim)break;
                 }
             }
-			if(!sum)dep[p]=0;
-			return sum;
-		};
-		ll ret=0;
-		while(bfs())cur.assign(n,0),ret+=dfs(dfs,s,infl);
-		return ret;
-	}
+            if(!sum)dep[p]=0;
+            return sum;
+        };
+        ll ret=0;
+        while(bfs())cur.assign(n,0),ret+=dfs(dfs,s,infl);
+        return ret;
+    }
     inline V<V<pil>> gomoryhu(){
         V<ll>f(e.size());
         V<int>id(n),tmp(n);
@@ -113,19 +113,19 @@ inline pair<ll,V<int>> boundflow(int n,const V<array<int,4>> &e,int tp=0,int S=-
 
 struct mincost{
     V<ll>dis;
-	V<array<int,3>>e;
-	V<V<int>>hd;
-	int n,S,T;
-	inline void add_edge(int x,int y,int z,int w){
-		assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
-		hd[x].pb(e.size()),e.pb({y,z,w}),hd[y].pb(e.size()),e.pb({x,0,-w});
-	}
-	inline mincost(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
-	inline mincost(const V<V<array<int,3>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const array<int,3> &j:to[i])add_edge(i,j[0],j[1],j[2]);}
+    V<array<int,3>>e;
+    V<V<int>>hd;
+    int n,S,T;
+    inline void add_edge(int x,int y,int z,int w){
+        assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
+        hd[x].pb(e.size()),e.pb({y,z,w}),hd[y].pb(e.size()),e.pb({x,0,-w});
+    }
+    inline mincost(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
+    inline mincost(const V<V<array<int,3>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const array<int,3> &j:to[i])add_edge(i,j[0],j[1],j[2]);}
     typedef pair<ll,ll> pll;
-	inline pll primal_dual(){
-		assert(S!=-1),assert(T!=-1);
-		V<ll>h;
+    inline pll primal_dual(){
+        assert(S!=-1),assert(T!=-1);
+        V<ll>h;
         V<bool>vis(n);
         auto spfa=[&]{
             h.assign(n,infl);
@@ -144,35 +144,35 @@ struct mincost{
         spfa();
         V<pii>pre(n);
         priority_queue<pli>q;
-		auto dijkstra=[&](){
-			dis.assign(n,infl);
+        auto dijkstra=[&](){
+            dis.assign(n,infl);
             dis[S]=0;
             q.emplace(0,S);
             vis.assign(n,false);
-			while(q.size()){
-				int p=q.top().se;q.pop();
+            while(q.size()){
+                int p=q.top().se;q.pop();
                 if(vis[p])continue;
                 vis[p]=true;
-				for(int i:hd[p]){
+                for(int i:hd[p]){
                     const auto &[j,k,l]=e[i];
                     if(k&&ckmin(dis[j],dis[p]+l+h[p]-h[j])){
                         pre[j]={p,i};
                         if(!vis[j])q.emplace(-dis[j],j);
                     }
                 }
-			}
-			return dis[T]!=infl;
-		};
-		ll ret1=0,ret2=0;
-		while(dijkstra()){
+            }
+            return dis[T]!=infl;
+        };
+        ll ret1=0,ret2=0;
+        while(dijkstra()){
             For(i,n)h[i]+=dis[i];
             ll f=infl;
             for(int i=T;i!=S;i=pre[i].fi)ckmin(f,(ll)e[pre[i].se][1]);
             for(int i=T;i!=S;i=pre[i].fi)e[pre[i].se][1]-=f,e[pre[i].se^1][1]+=f;
             ret1+=f,ret2+=f*h[T];
         }
-		return {ret1,ret2};
-	}
+        return {ret1,ret2};
+    }
     inline pll dinic(){
         assert(S!=-1),assert(T!=-1);
         queue<int>q;
