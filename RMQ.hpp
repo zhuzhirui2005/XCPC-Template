@@ -1,10 +1,10 @@
 template<class T,class U=less<T>>
 struct ST{
-    const U cmp=U();
-	int n;
-	V<V<T>>st;
-	inline ST(){}
-	inline ST(const V<T> &a):n(a.size()){
+    U cmp;
+    int n;
+    V<V<T>>st;
+    inline ST(){}
+    inline ST(const V<T> &a,U c=U()):n(a.size()),cmp(move(c)){
         if(n){
             int B=__lg(n);
             V<V<T>>(B+1).swap(st);
@@ -14,35 +14,23 @@ struct ST{
                 For(j,n-(1<<i)+1)st[i][j]=min(st[i-1][j],st[i-1][j+(1<<i-1)],cmp);
             }
         }
-	}
-    inline ST(const V<T> &a,const V<int> &pos):n(a.size()){
-		assert(n==pos.size());
-		if(n){
-			int B=__lg(n);
-			V<V<T>>(B+1).swap(st);
-			For(i,B+1){
-				st[i].resize(n-(1<<i)+1);
-				if(i)For(j,n-(1<<i)+1)st[i][j]=min(st[i-1][j],st[i-1][j+(1<<i-1)],cmp);
-				else For(i,n)st[0][pos[i]]=a[i];
-			}
-		}
-	}
-	inline T query(int l,int r){
-		assert(0<=l),assert(l<=r),assert(r<n);
-		int k=__lg(r-l+1);
-		return min(st[k][l],st[k][r-(1<<k)+1],cmp);
-	}
+    }
+    inline T query(int l,int r){
+        assert(0<=l),assert(l<=r),assert(r<n);
+        int k=__lg(r-l+1);
+        return min(st[k][l],st[k][r-(1<<k)+1],cmp);
+    }
 };
 
 template<class T,class U=less<T>>
 struct RMQ{
     V<T>a,pre,suf;
-    const U cmp=U();
+    U cmp;
     int n;
-	V<V<T>>st;
+    V<V<T>>st;
     V<ull>stk;
     inline RMQ(){}
-    inline RMQ(const V<T> &a):a(a),n(a.size()),pre(a),suf(a),stk(a.size()){
+    inline RMQ(const V<T> &a,U c=U()):a(a),pre(a),suf(a),n(a.size()),cmp(move(c)),stk(a.size()){
         if(n){
             const int m=n+63>>6,B=__lg(m)+1;
             st.resize(B);

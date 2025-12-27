@@ -44,31 +44,31 @@ p                   r   k   g
 4179340454199820289 29  57  3
 */
 
-inline V<mi> poly_conv_add(const V<mi> &_a,const V<mi> &_b,int g){ // c[k]=¡Æ(a[i]*b[j]) for i+j=k verified with lg3803
-    assert(_a.size()&&_b.size());
-    if(max(_a.size(),_b.size())<17){
-        V<mi>c(_a.size()+_b.size()-1);
-        For(i,_a.size())For(j,_b.size())c[i+j]+=_a[i]*_b[j];
+inline V<mi> poly_conv_add(V<mi> a,V<mi> b,int g){ // c[k]=¡Æ(a[i]*b[j]) for i+j=k verified with lg3803
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    if(max(n,m)<17){
+        V<mi>c(n+m-1);
+        For(i,n)For(j,m)c[i+j]+=a[i]*b[j];
         return c;
     }
-    int lg=0,n=1;
-    while(n<_a.size()+_b.size()-1)++lg,n<<=1;
-    V<mi>a=_a,b=_b;
-    a.resize(n),b.resize(n);
+    int lg=0,nm=1;
+    while(nm<n+m-1)++lg,nm<<=1;
+    a.resize(nm),b.resize(nm);
     static V<V<int>>btf;
     while(btf.size()<=lg){
-        int n=1<<btf.size();
+        int l=1<<btf.size();
         btf.pb({});
         V<int>&bf=btf.back();
-        bf.resize(n);
-        For(i,n)bf[i]=(bf[i>>1]>>1)|((i&1)?n>>1:0);
+        bf.resize(l);
+        For(i,l)bf[i]=(bf[i>>1]>>1)|((i&1)?l>>1:0);
     }
-    const V<int>&bf=btf[lg];
+    const V<int> &bf=btf[lg];
     auto NTT=[&](V<mi> &f,mi coef){
-        For(i,n)if(i<bf[i])swap(f[i],f[bf[i]]);
-        for(int k=1,l=2;k<n;k<<=1,l<<=1){
+        For(i,nm)if(i<bf[i])swap(f[i],f[bf[i]]);
+        for(int k=1,l=2;k<nm;k<<=1,l<<=1){
             mi wn=coef^((mod-1)/l);
-            for(int i=0;i<n;i+=l){
+            for(int i=0;i<nm;i+=l){
                 mi w=1;
                 For(j,k){
                     mi x=f[i|j],y=w*f[i|j|k];
@@ -79,22 +79,22 @@ inline V<mi> poly_conv_add(const V<mi> &_a,const V<mi> &_b,int g){ // c[k]=¡Æ(a[
         }
     };
     NTT(a,g),NTT(b,g);
-    For(i,n)a[i]*=b[i];
+    For(i,nm)a[i]*=b[i];
     NTT(a,mi(1)/g);
-    a.resize(_a.size()+_b.size()-1);
-    mi invn=mi(1)/n;
-    for(mi &i:a)i*=invn;
+    a.resize(n+m-1);
+    mi invnm=mi(1)/nm;
+    for(mi &i:a)i*=invnm;
     return a;
 }
 
-inline V<mi> poly_conv_sub(const V<mi> &_a,const V<mi> &_b,int g){ // c[k]=¡Æ(a[i]*b[j]) for i-j=k verified with gym105386H
-    assert(_a.size()&&_b.size());
-    if(_a.size()<_b.size())return {};
-    V<mi>b=_b;
+inline V<mi> poly_conv_sub(const V<mi> &a,V<mi> b,int g){ // c[k]=¡Æ(a[i]*b[j]) for i-j=k verified with gym105386H
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    if(n<m)return {};
     reverse(ALL(b));
-    b=poly_conv_add(_a,b,g);
+    b=poly_conv_add(a,b,g);
     // (-b.size(),a.size()) -> [0,a.size())
-    b.erase(b.begin(),b.begin()+_b.size()-1);
+    b.erase(b.begin(),b.begin()+m-1);
     return b;
 }
 
@@ -125,118 +125,141 @@ inline int find_g(int m){
     FOR(i,1,m)if(check_g(i))return i;
     return -1;
 }
-inline V<mi> poly_conv_mul(const V<mi> &_a,const V<mi> &_b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[i]*b[j]) for i*j%p=k verified by qoj9247
-    assert(_a.size()&&_b.size());
+inline V<mi> poly_conv_mul(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[i]*b[j]) for i*j%p=k (p should be prime) verified by qoj9247
+    int n=a.size(),m=b.size();
+    assert(n&&m),assert(p>1);
+    for(int i=2;i*i<=p;++i)assert(p%i);
     if(!~pg)pg=find_g(p);
     assert(~pg);
     V<int>exp(p-1),lg(p);
     lg[0]=-1;
     for(int i=1,j=0;j<p-1;i=1ll*i*pg%p,++j)exp[j]=i,lg[i]=j;
-    V<mi>a(p-1),b(p-1);
-    FOR(i,1,_a.size())a[lg[i]]=_a[i];
-    FOR(i,1,_b.size())b[lg[i]]=_b[i];
-    V<mi>c=poly_conv_add(a,b,g);
+    if(n>p){
+        FOR(i,p,n)a[i%p]+=a[i];
+        a.resize(p),n=p;
+    }
+    if(m>p){
+        FOR(i,p,m)b[i%p]+=b[i];
+        b.resize(p),m=p;
+    }
+    V<mi>_a(p-1),_b(p-1);
+    FOR(i,1,n)_a[lg[i]]=a[i];
+    FOR(i,1,m)_b[lg[i]]=b[i];
+    V<mi>c=poly_conv_add(_a,_b,g);
     FOR(i,p-1,c.size())c[i-(p-1)]+=c[i];
     V<mi>d(p);
-    d[0]=_a[0]*reduce(ALL(_b))+_b[0]*reduce(ALL(_a))-_a[0]*_b[0];
+    d[0]=a[0]*reduce(ALL(b))+b[0]*reduce(ALL(a))-a[0]*b[0];
     For(i,p-1)d[exp[i]]=c[i];
     return d;
 }
 
-inline V<mi> poly_conv_div(const V<mi> &_a,const V<mi> &_b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[i]*b[j]) for i/j%p=k not verified
-    assert(_a.size()&&_b.size()),assert(!_b[0].val);
+inline V<mi> poly_conv_div(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[i]*b[j]) for i/j%p=k (p should be prime) not verified
+    int n=a.size(),m=b.size();
+    assert(n&&m),assert(p>1);
+    for(int i=2;i*i<=p;++i)assert(p%i);
+    if(n>p){
+        FOR(i,p,n)a[i%p]+=a[i];
+        a.resize(p),n=p;
+    }
+    if(m>p){
+        FOR(i,p,m)b[i%p]+=b[i];
+        b.resize(p),m=p;
+    }
+    assert(!b[0]);
     V<int>inv(p);
     inv[1]=1;
-    FOR(i,1,p)inv[i]=1ll*(p-p/i)*inv[p%i]%mod;
-    V<mi>b(p);
-    FOR(i,1,_b.size())b[inv[i]]=_b[i];
-    return poly_conv_mul(_a,b,g,p,pg);
+    FOR(i,2,p)inv[i]=1ll*(p-p/i)*inv[p%i]%p;
+    V<mi>_b(p);
+    FOR(i,1,m)_b[inv[i]]=b[i];
+    return poly_conv_mul(a,_b,g,p,pg);
 }
 
-inline V<mi> poly_conv_and(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j]) for i&j=k verified with lg4717
-    assert(_a.size()&&_b.size());
-    int n=1;
-    while(n<max(_a.size(),_b.size()))n<<=1;
-    V<mi>a=_a,b=_b;
-    a.resize(n),b.resize(n);
+inline V<mi> poly_conv_and(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i&j=k verified with lg4717
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    int nm=1;
+    while(nm<max(n,m))nm<<=1;
+    a.resize(nm),b.resize(nm);
     auto FWT=[&](V<mi> &f,int coef){
-        for(int k=1,l=2;k<n;k<<=1,l<<=1)for(int i=0;i<n;i+=l)For(j,k)f[i|j]+=f[i|j|k]*coef;
+        for(int k=1,l=2;k<nm;k<<=1,l<<=1)for(int i=0;i<nm;i+=l)For(j,k)f[i|j]+=f[i|j|k]*coef;
     };
     FWT(a,1),FWT(b,1);
-    For(i,n)a[i]*=b[i];
+    For(i,nm)a[i]*=b[i];
     FWT(a,mod-1);
     return a;
 }
 
-inline V<mi> poly_conv_or(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j]) for i|j=k verified with lg4717
-    assert(_a.size()&&_b.size());
-    int n=1;
-    while(n<max(_a.size(),_b.size()))n<<=1;
-    V<mi>a=_a,b=_b;
-    a.resize(n),b.resize(n);
+inline V<mi> poly_conv_or(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i|j=k verified with lg4717
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    int nm=1;
+    while(nm<max(n,m))nm<<=1;
+    a.resize(nm),b.resize(nm);
     auto FWT=[&](V<mi> &f,int coef){
-        for(int k=1,l=2;k<n;k<<=1,l<<=1)for(int i=0;i<n;i+=l)For(j,k)f[i|j|k]+=f[i|j]*coef;
+        for(int k=1,l=2;k<nm;k<<=1,l<<=1)for(int i=0;i<nm;i+=l)For(j,k)f[i|j|k]+=f[i|j]*coef;
     };
     FWT(a,1),FWT(b,1);
-    For(i,n)a[i]*=b[i];
+    For(i,nm)a[i]*=b[i];
     FWT(a,mod-1);
     return a;
 }
 
-inline V<mi> poly_conv_xor(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j]) for i^j=k verified with lg4717
-    assert(_a.size()&&_b.size());
-    int n=1;
-    while(n<max(_a.size(),_b.size()))n<<=1;
-    V<mi>a=_a,b=_b;
-    a.resize(n),b.resize(n);
+inline V<mi> poly_conv_xor(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i^j=k verified with lg4717
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    int nm=1;
+    while(nm<max(n,m))nm<<=1;
+    a.resize(nm),b.resize(nm);
     auto FWT=[&](V<mi> &f,int coef){
-        for(int k=1,l=2;k<n;k<<=1,l<<=1)for(int i=0;i<n;i+=l)For(j,k){
+        for(int k=1,l=2;k<nm;k<<=1,l<<=1)for(int i=0;i<nm;i+=l)For(j,k){
             mi x=f[i|j],y=f[i|j|k];
             f[i|j]=(x+y)*coef,f[i|j|k]=(x-y)*coef;
         }
     };
     FWT(a,1),FWT(b,1);
-    For(i,n)a[i]*=b[i];
+    For(i,nm)a[i]*=b[i];
     FWT(a,mod+1>>1);
     return a;
 }
 
-
-
-inline V<mi> poly_conv_gcd(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j]) for gcd(i,j)=k verified with lc418t4
-    assert(_a.size()&&_b.size());
-    int n=max(_a.size(),_b.size());
-    V<mi>a=_a,b=_b;
-    a.resize(n),b.resize(n);
+inline V<mi> poly_conv_gcd(const V<mi> &a,const V<mi> &b){ // c[k]=¡Æ(a[i]*b[j]) for gcd(i,j)=k verified with lc418t4
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    int nm=max(n,m);
+    V<mi>_a=a,_b=b;
+    _a.resize(nm),_b.resize(nm);
     V<int>pri;
-    V<bool>vis(n);
-    FOR(i,2,n)if(!vis[i]){
+    V<bool>vis(nm);
+    FOR(i,2,nm)if(!vis[i]){
         pri.pb(i);
-        for(int k=(n-1)/i,j=k*i;k;j-=i,--k)a[k]+=a[j],b[k]+=b[j],vis[j]=true;
+        for(int k=(nm-1)/i,j=k*i;k;j-=i,--k)_a[k]+=_a[j],_b[k]+=_b[j],vis[j]=true;
     }
-    FOR(i,1,n)a[i]*=b[i];
-    for(int i:pri)for(int j=i,k=1;j<n;j+=i,++k)a[k]-=a[j];
-    a[0]=_a[0]*_b[0];
-    FOR(i,1,n)a[i]+=_a[0]*_b[i]+_b[0]*_a[i];
-    return a;
+    FOR(i,1,nm)_a[i]*=_b[i];
+    for(int i:pri)for(int j=i,k=1;j<nm;j+=i,++k)_a[k]-=_a[j];
+    _a[0]=a[0]*b[0];
+    FOR(i,1,nm){
+        if(i<n)_a[i]+=b[0]*a[i];
+        if(i<m)_a[i]+=a[0]*b[i];
+    }
+    return _a;
 }
 
-inline V<mi> poly_conv_lcm(const V<mi> &_a,const V<mi> &_b){ // c[k]=¡Æ(a[i]*b[j]) for lcm(i,j)=k not verified
-    assert(_a.size()&&_b.size());
-    int n=max(_a.size(),_b.size());
-    V<mi>a=_a,b=_b;
-    a.resize(n),b.resize(n);
+inline V<mi> poly_conv_lcm(const V<mi> &a,const V<mi> &b){ // c[k]=¡Æ(a[i]*b[j]) for lcm(i,j)=k not verified
+    int n=a.size(),m=b.size();
+    assert(n&&m);
+    int nm=max(n,m);
+    V<mi>_a=a,_b=b;
+    _a.resize(nm),_b.resize(nm);
     V<int>pri;
-    V<bool>vis(n);
-    FOR(i,2,n)if(!vis[i]){
+    V<bool>vis(nm);
+    FOR(i,2,nm)if(!vis[i]){
         pri.pb(i);
-        for(int j=i,k=1;j<n;j+=i,++k)a[j]+=a[k],b[j]+=b[k],vis[j]=true;
+        for(int j=i,k=1;j<nm;j+=i,++k)_a[j]+=_a[k],_b[j]+=_b[k],vis[j]=true;
     }
-    FOR(i,1,n)a[i]*=b[i];
-    for(int i:pri)for(int k=(n-1)/i,j=k*i;k;j-=i,--k)a[j]-=a[k];
-    a[0]=_a[0]*_b[0];
-    FOR(i,1,n)a[i]+=_a[0]*_b[i]+_b[0]*_a[i];
-    return a;
+    FOR(i,1,nm)_a[i]*=_b[i];
+    for(int i:pri)for(int k=(nm-1)/i,j=k*i;k;j-=i,--k)_a[j]-=_a[k];
+    _a[0]=a[0]*reduce(ALL(b))+b[0]*reduce(ALL(a))-a[0]*b[0];
+    return _a;
 }
 
 inline V<mi> poly_inv(const V<mi> &a,int g){ // b=1/a verified with lg4238
@@ -436,4 +459,28 @@ inline V<mi> poly_multi_pt_sum(const V<mi> &a,int m,int g){ // b[i]=sum(a[j]^i) 
     c[0]=n;
     FOR(i,1,m+1)c[i]*=mod-i;
     return c;
+}
+
+inline pair<V<mi>,V<mi>> poly_recur(V<mi> a,V<mi> c,int g){ // build P(x)/Q(x) from sum(a^i*c^(k-i))=0 for i in [0,k] verified by lg4723
+    int k=a.size();
+    assert(k),assert(k+1==c.size());
+    assert(c[0].val);
+    a=poly_conv_add(a,c,g);
+    a.resize(k);
+    return {a,c};
+}
+inline mi poly_coef(ll m,V<mi> P,V<mi> Q,int g){ // [x^m] P(x)/Q(x) verified by abc436g
+    assert(P.size()&&Q.size()),assert(Q[0].val);
+    for(;m;m>>=1){
+        V<mi>R=Q;
+        for(int i=1;i<Q.size();i+=2)R[i]=-R[i];
+        P=poly_conv_add(P,R,g),Q=poly_conv_add(Q,R,g);
+        int i;
+        for(i=m&1;i<P.size();i+=2)P[i>>1]=P[i];
+        P.resize(i>>1);
+        if(P.empty())return 0;
+        for(i=0;i<Q.size();i+=2)Q[i>>1]=Q[i];
+        Q.resize(i>>1);
+    }
+    return P[0]/Q[0];
 }

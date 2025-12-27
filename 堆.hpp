@@ -25,19 +25,24 @@ struct kpq{
     delpq<T,greater<T>>s1;
     delpq<T>s2;
     ll sum; // 暂时默认对堆中前 k 大的数求和
-    inline kpq(int k=0):k(k),sum(0){static_assert((is_same_v<T,int>)||(is_same_v<T,ll>)||(is_same_v<T,ull>));}
+    inline kpq(int k=0):k(k),sum(0){static_assert((is_same_v<T,int>)||(is_same_v<T,ll>));}
     inline void push(const T &x){
         if(s1.size()<k)s1.push(x),sum+=x;
         else{
-            if(s1.top()<x)s2.push(s1.top()),sum-=s1.top(),s1.pop(),s1.push(x),sum+=x;
+            if(s1.size()&&s1.top()<x)s2.push(s1.top()),sum-=s1.top(),s1.pop(),s1.push(x),sum+=x;
             else s2.push(x);
         }
     }
     inline void pop(const T &x){
-        if(s1.size()&&x<s1.top())s2.pop(x);
+        if(s1.empty()||x<s1.top())s2.pop(x);
         else{
             sum-=x,s1.pop(x);
             if(s1.size()<k&&s2.size())s1.push(s2.top()),sum+=s2.top(),s2.pop();
         }
+    }
+    inline void reset(int kk){
+        k=kk;
+        while(s1.size()<k&&s2.size())s1.push(s2.top()),sum+=s2.top(),s2.pop();
+        while(s1.size()>k)s2.push(s1.top()),sum-=s1.top(),s1.pop();
     }
 };

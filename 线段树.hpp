@@ -131,8 +131,8 @@ struct SGT_2n{
     V<T>t,tag;
     inline int idx(int l,int r){return l+r|l!=r;}
     #define p idx(l,r)
-	#define ls idx(l,mid)
-	#define rs idx(mid+1,r)
+    #define ls idx(l,mid)
+    #define rs idx(mid+1,r)
     inline SGT_2n(int n=0):n(n),t(n<<1),tag(n<<1){}
     void build(int l,int r,const V<T>&v){
         if(l==r){t[p]=v[l];return;}
@@ -152,4 +152,53 @@ struct SGT_2n{
     #undef p
     #undef ls
     #undef rs
+};
+
+template<class T>
+struct ODT{
+    map<T,T>p;
+    inline ODT(){}
+    inline ODT(const V<pair<T,T>> &v){
+        for(const auto &[l,r]:v)insert(l,r);
+    }
+    inline V<pair<T,T>> insert(T l,T r){
+        assert(l<=r);
+        V<pair<T,T>>ret;
+        T tmp=l-1;
+        auto it=p.lower_bound(l-1);
+        if(it!=p.end())ckmin(l,it->se);
+        while(it!=p.end()&&it->se<=r+1){
+            if(tmp+1<it->se)ret.eb(tmp+1,it->se-1);
+            ckmax(r,tmp=it->fi);
+            it=p.erase(it);
+        }
+        if(tmp<r)ret.eb(tmp+1,r);
+        p.insert(it,{r,l});
+        return ret;
+    }
+    inline V<pair<T,T>> erase(const T &l,const T &r){
+        assert(l<=r);
+        V<pair<T,T>>ret;
+        auto it=p.lower_bound(l);
+        if(it!=p.end()&&it->se<l)p.insert(it,{l-1,it->se});
+        while(it!=p.end()&&it->fi<=r){
+            ret.eb(max(it->se,l),it->fi);
+            it=p.erase(it);
+        }
+        if(it!=p.end()&&it->se<=r){
+            ret.eb(max(it->se,l),r);
+            it->se=r+1;
+        }
+        return ret;
+    }
+    inline bool cover(const T &l,const T &r){
+        assert(l<=r);
+        auto it=p.lower_bound(r);
+        return it!=p.end()&&it->se<=l;
+    }
+    inline bool intersect(const T &l,const T &r){
+        assert(l<=r);
+        auto it=p.lower_bound(l);
+        return it!=p.end()&&it->se<=r;
+    }
 };

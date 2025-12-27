@@ -33,6 +33,7 @@ jobs:
             "离散化.hpp:字符串.hpp"
             "树状数组.hpp:vector.hpp"
             "离散化.hpp:树.hpp"
+            "dq.hpp:杂项.hpp"
           )
           for pair in "${deps[@]}"; do
             IFS=: read -r dep target <<< "$pair"

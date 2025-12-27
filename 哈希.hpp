@@ -1,32 +1,32 @@
 template<int base=2333>
 struct mhsh{
-	// 0-indexed
-	V<ull>bs,h;
-	inline mhsh(){}
-	inline mhsh(const string &s){
-		bs.reserve(s.size()),h.reserve(s.size());
-		bs.pb(1),h.pb(s[0]);
-		FOR(i,1,s.size())bs.pb(bs.back()*base),h.pb(h.back()*base+s[i]);
-	}
-	inline mhsh(const V<int> &v){
+    // 0-indexed
+    V<ull>bs,h;
+    inline mhsh(){}
+    inline mhsh(const string &s){
+        bs.reserve(s.size()),h.reserve(s.size());
+        bs.pb(1),h.pb(s[0]);
+        FOR(i,1,s.size())bs.pb(bs.back()*base),h.pb(h.back()*base+s[i]);
+    }
+    inline mhsh(const V<int> &v){
         bs.reserve(v.size()),h.reserve(v.size());
         bs.pb(1),h.pb(v[0]);
         FOR(i,1,v.size())bs.pb(bs.back()*base),h.pb(h.back()*base+v[i]);
     }
-	inline ull get(int l,int r){
-		assert(0<=l),assert(l<=r),assert(r<h.size());
-		return h[r]-(l?h[l-1]*bs[r-l+1]:0);
-	}
-	inline int lcp(int x,int y){
-		assert(0<=min(x,y)),assert(max(x,y)<h.size());
-		int l=1,r=h.size()-max(x,y),ret=0;
-		while(l<=r){
-			int mid=l+r>>1;
-			if(get(x,x+mid-1)==get(y,y+mid-1))l=mid+1,ret=mid;
-			else r=mid-1;
-		}
-		return ret;
-	}
+    inline ull get(int l,int r){
+        assert(0<=l),assert(l<=r),assert(r<h.size());
+        return h[r]-(l?h[l-1]*bs[r-l+1]:0);
+    }
+    inline int lcp(int x,int y){
+        assert(0<=min(x,y)),assert(max(x,y)<h.size());
+        int l=1,r=h.size()-max(x,y),ret=0;
+        while(l<=r){
+            int mid=l+r>>1;
+            if(get(x,x+mid-1)==get(y,y+mid-1))l=mid+1,ret=mid;
+            else r=mid-1;
+        }
+        return ret;
+    }
 };
 
 template<int base=2337,int mod=998244853>
@@ -66,15 +66,15 @@ struct dmhsh{
         return {hsh1.get(l,r),hsh2.get(l,r)};
     }
     inline int lcp(int x,int y){
-		assert(0<=min(x,y)),assert(max(x,y)<hsh2.h.size());
-		int l=1,r=hsh2.h.size()-max(x,y),ret=0;
-		while(l<=r){
-			int mid=l+r>>1;
-			if(get(x,x+mid-1)==get(y,y+mid-1))l=mid+1,ret=mid;
-			else r=mid-1;
-		}
-		return ret;
-	}
+        assert(0<=min(x,y)),assert(max(x,y)<hsh2.h.size());
+        int l=1,r=hsh2.h.size()-max(x,y),ret=0;
+        while(l<=r){
+            int mid=l+r>>1;
+            if(get(x,x+mid-1)==get(y,y+mid-1))l=mid+1,ret=mid;
+            else r=mid-1;
+        }
+        return ret;
+    }
 };
 
 mt19937 rnd(time(0));
@@ -124,13 +124,13 @@ struct drhsh{
         return {hsh1.get(l,r),hsh2.get(l,r)};
     }
     inline int lcp(int x,int y){
-		assert(0<=min(x,y)),assert(max(x,y)<hsh2.h.size());
-		int l=1,r=hsh2.h.size()-max(x,y),ret=0;
-		while(l<=r){
-			int mid=l+r>>1;
-			if(get(x,x+mid-1)==get(y,y+mid-1))l=mid+1,ret=mid;
-			else r=mid-1;
-		}
-		return ret;
-	}
+        assert(0<=min(x,y)),assert(max(x,y)<hsh2.h.size());
+        int l=1,r=hsh2.h.size()-max(x,y),ret=0;
+        while(l<=r){
+            int mid=l+r>>1;
+            if(get(x,x+mid-1)==get(y,y+mid-1))l=mid+1,ret=mid;
+            else r=mid-1;
+        }
+        return ret;
+    }
 };

@@ -1,14 +1,14 @@
 template<class T>
 struct disc{
-	// 0-indexed
-	vector<T>d;
-	inline disc(){}
+    // 0-indexed
+    vector<T>d;
+    inline disc(){}
     inline disc(const vector<T> &v):d(v){init();}
-	inline void add(const T &x){d.pb(x);}
-	inline void add(const V<T> &v){d.insert(d.end(),ALL(v));}
-	inline void init(){sort(ALL(d)),d.erase(unique(ALL(d)),d.end());}
-	inline int query(const T &x){return lower_bound(ALL(d),x)-d.begin();}
-	inline int size(){return d.size();}
+    inline void add(const T &x){d.pb(x);}
+    inline void add(const V<T> &v){d.insert(d.end(),ALL(v));}
+    inline void init(){sort(ALL(d)),d.erase(unique(ALL(d)),d.end());}
+    inline int query(const T &x){return lower_bound(ALL(d),x)-d.begin();}
+    inline int size(){return d.size();}
 };
 
 template<class T,class container>
