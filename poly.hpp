@@ -166,9 +166,8 @@ inline V<mi> poly_conv_div(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[
         b.resize(p),m=p;
     }
     assert(!b[0]);
-    V<int>inv(p);
-    inv[1]=1;
-    FOR(i,2,p)inv[i]=1ll*(p-p/i)*inv[p%i]%p;
+    static V<int>inv{0,1};
+    while(inv.size()<p)inv.pb(1ll*(p-p/inv.size())*inv[p%inv.size()]%p);
     V<mi>_b(p);
     FOR(i,1,m)_b[inv[i]]=b[i];
     return poly_conv_mul(a,_b,g,p,pg);
@@ -309,9 +308,11 @@ inline V<mi> poly_diff(const V<mi> &a){ // b=a'
 inline V<mi> poly_intg(const V<mi> &a){ // b=¡Òa
     int n=a.size();
     assert(n);
-    V<mi>b(n+1),inv(n+1);
-    b[1]=a[0],inv[1]=1;
-    FOR(i,2,n)b[i]=a[i-1]*(inv[i]=(mod-mod/i)*inv[mod%i]);
+    static V<mi>inv{0,1};
+    while(inv.size()<=n)inv.pb((mod-mod/inv.size())*inv[mod%inv.size()]);
+    V<mi>b(n+1);
+    b[1]=a[0];
+    FOR(i,2,n+1)b[i]=a[i-1]*inv[i];
     return b;
 }
 
@@ -483,4 +484,51 @@ inline mi poly_coef(ll m,V<mi> P,V<mi> Q,int g){ // [x^m] P(x)/Q(x) verified by 
         Q.resize(i>>1);
     }
     return P[0]/Q[0];
+}
+
+inline V<mi> bernoulli(int n,int g){ // a[i]=Bernoulli[i]/i!
+    assert(n>0);
+    V<mi>a(n+1);
+    a[1]=1;
+    a=poly_exp(a,g);
+    a.erase(a.begin());
+    return poly_inv(a,g);
+}
+
+inline mi poly_intv_sum(V<mi> a,ll l,ll r,int g){ // ¡Æ(a[i]*x^i) for l<=x<=r
+    if(l>r)return 0;
+    int n=a.size();
+    assert(n);
+    mi fac=1;
+    a.insert(a.begin(),0),++n;
+    FOR(i,1,n)a[i]*=fac,fac*=i;
+    a=poly_conv_sub(a,bernoulli(n,g),g);
+    fac=1/fac;
+    Rep(i,n)a[i]*=fac,fac*=i;
+    l%=mod,r=(r+1)%mod;
+    if(l<0)l+=mod;
+    if(r<0)r+=mod;
+    mi pl=1,pr=1,ret=0;
+    For(i,n)ret+=a[i]*(pr-pl),pl*=l,pr*=r;
+    return ret;
+}
+
+inline mi poly_intv_sum(V<mi> a,ll l,ll r){ // ¡Æ(a[i]*x^i) for l<=x<=r
+    if(l>r)return 0;
+    int n=a.size();
+    assert(n);
+    V<mi>S{1};
+    S.reserve(n-1);
+    FOR(i,1,n){
+        Rep(j,i)a[j]+=(S[j]=(j?S[j-1]:0)+j*S[j])*a[i];
+        S.pb(1);
+    }
+    l=(l-1)%mod,r%=mod;
+    if(l<0)l+=mod;
+    if(r<0)r+=mod;
+    static V<mi>inv{0,1};
+    while(inv.size()<=n)inv.pb((mod-mod/inv.size())*inv[mod%inv.size()]);
+    mi cl=1,cr=1,ret=0;
+    For(i,n)cl*=l+1-i,cr*=r+1-i,ret+=a[i]*(cr-cl)*inv[i+1];
+    return ret;
 }
