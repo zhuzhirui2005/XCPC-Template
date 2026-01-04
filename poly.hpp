@@ -44,53 +44,59 @@ p                   r   k   g
 4179340454199820289 29  57  3
 */
 
+inline void NTT(V<mi> &f,mi coef,const int lg,V<mi> &wn){
+    static V<V<int>>btf;
+    while(btf.size()<=lg){
+        int n=1<<btf.size();
+        btf.pb({});
+        V<int>&bf=btf.back();
+        bf.resize(n);
+        For(i,n)bf[i]=(bf[i>>1]>>1)|((i&1)?n>>1:0);
+    }
+    const V<int> &bf=btf[lg];
+    const int n=1<<lg;
+    f.resize(n);
+    For(i,n)if(i<bf[i])swap(f[i],f[bf[i]]);
+    for(int k=1,l=2,p=0;p<lg;k<<=1,l<<=1,++p){
+        if(p==wn.size())wn.pb(coef^((mod-1)/l));
+        mi wnp=wn[p];
+        for(int i=0;i<n;i+=l){
+            mi w=1;
+            For(j,k){
+                mi x=f[i|j],y=w*f[i|j|k];
+                f[i|j]=x+y,f[i|j|k]=x-y;
+                w*=wnp;
+            }
+        }
+    }
+}
+
 inline V<mi> poly_conv_add(V<mi> a,V<mi> b,int g){ // c[k]=¡Æ(a[i]*b[j]) for i+j=k verified with lg3803
     int n=a.size(),m=b.size();
-    assert(n&&m);
+    if(!n||!m)return {};
     if(max(n,m)<17){
         V<mi>c(n+m-1);
         For(i,n)For(j,m)c[i+j]+=a[i]*b[j];
         return c;
     }
+    mi invnm=1;
     int lg=0,nm=1;
-    while(nm<n+m-1)++lg,nm<<=1;
+    while(nm<n+m-1)invnm*=mod+1>>1,++lg,nm<<=1;
     a.resize(nm),b.resize(nm);
-    static V<V<int>>btf;
-    while(btf.size()<=lg){
-        int l=1<<btf.size();
-        btf.pb({});
-        V<int>&bf=btf.back();
-        bf.resize(l);
-        For(i,l)bf[i]=(bf[i>>1]>>1)|((i&1)?l>>1:0);
-    }
-    const V<int> &bf=btf[lg];
-    auto NTT=[&](V<mi> &f,mi coef){
-        For(i,nm)if(i<bf[i])swap(f[i],f[bf[i]]);
-        for(int k=1,l=2;k<nm;k<<=1,l<<=1){
-            mi wn=coef^((mod-1)/l);
-            for(int i=0;i<nm;i+=l){
-                mi w=1;
-                For(j,k){
-                    mi x=f[i|j],y=w*f[i|j|k];
-                    f[i|j]=x+y,f[i|j|k]=x-y;
-                    w*=wn;
-                }
-            }
-        }
-    };
-    NTT(a,g),NTT(b,g);
+    V<mi>wp;
+    NTT(a,g,lg,wp),NTT(b,g,lg,wp);
     For(i,nm)a[i]*=b[i];
-    NTT(a,mi(1)/g);
+    V<mi>iwp;
+    NTT(a,mi(1)/g,lg,iwp);
     a.resize(n+m-1);
-    mi invnm=mi(1)/nm;
     for(mi &i:a)i*=invnm;
     return a;
 }
 
 inline V<mi> poly_conv_sub(const V<mi> &a,V<mi> b,int g){ // c[k]=¡Æ(a[i]*b[j]) for i-j=k verified with gym105386H
     int n=a.size(),m=b.size();
-    assert(n&&m);
-    if(n<m)return {};
+    if(!n||!m)return {};
+    if(m>n)b.resize(m=n);
     reverse(ALL(b));
     b=poly_conv_add(a,b,g);
     // (-b.size(),a.size()) -> [0,a.size())
@@ -127,7 +133,8 @@ inline int find_g(int m){
 }
 inline V<mi> poly_conv_mul(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[i]*b[j]) for i*j%p=k (p should be prime) verified by qoj9247
     int n=a.size(),m=b.size();
-    assert(n&&m),assert(p>1);
+    if(!n||!m)return {};
+    assert(p>1);
     for(int i=2;i*i<=p;++i)assert(p%i);
     if(!~pg)pg=find_g(p);
     assert(~pg);
@@ -155,7 +162,8 @@ inline V<mi> poly_conv_mul(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[
 
 inline V<mi> poly_conv_div(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[i]*b[j]) for i/j%p=k (p should be prime) not verified
     int n=a.size(),m=b.size();
-    assert(n&&m),assert(p>1);
+    if(!n||!m)return {};
+    assert(p>1);
     for(int i=2;i*i<=p;++i)assert(p%i);
     if(n>p){
         FOR(i,p,n)a[i%p]+=a[i];
@@ -175,7 +183,7 @@ inline V<mi> poly_conv_div(V<mi> a,V<mi> b,int g,int p,int pg=-1){ // c[k]=¡Æ(a[
 
 inline V<mi> poly_conv_and(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i&j=k verified with lg4717
     int n=a.size(),m=b.size();
-    assert(n&&m);
+    if(!n||!m)return {};
     int nm=1;
     while(nm<max(n,m))nm<<=1;
     a.resize(nm),b.resize(nm);
@@ -190,7 +198,7 @@ inline V<mi> poly_conv_and(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i&j=k ver
 
 inline V<mi> poly_conv_or(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i|j=k verified with lg4717
     int n=a.size(),m=b.size();
-    assert(n&&m);
+    if(!n||!m)return {};
     int nm=1;
     while(nm<max(n,m))nm<<=1;
     a.resize(nm),b.resize(nm);
@@ -205,7 +213,7 @@ inline V<mi> poly_conv_or(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i|j=k veri
 
 inline V<mi> poly_conv_xor(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i^j=k verified with lg4717
     int n=a.size(),m=b.size();
-    assert(n&&m);
+    if(!n||!m)return {};
     int nm=1;
     while(nm<max(n,m))nm<<=1;
     a.resize(nm),b.resize(nm);
@@ -223,7 +231,7 @@ inline V<mi> poly_conv_xor(V<mi> a,V<mi> b){ // c[k]=¡Æ(a[i]*b[j]) for i^j=k ver
 
 inline V<mi> poly_conv_gcd(const V<mi> &a,const V<mi> &b){ // c[k]=¡Æ(a[i]*b[j]) for gcd(i,j)=k verified with lc418t4
     int n=a.size(),m=b.size();
-    assert(n&&m);
+    if(!n||!m)return {};
     int nm=max(n,m);
     V<mi>_a=a,_b=b;
     _a.resize(nm),_b.resize(nm);
@@ -245,7 +253,7 @@ inline V<mi> poly_conv_gcd(const V<mi> &a,const V<mi> &b){ // c[k]=¡Æ(a[i]*b[j])
 
 inline V<mi> poly_conv_lcm(const V<mi> &a,const V<mi> &b){ // c[k]=¡Æ(a[i]*b[j]) for lcm(i,j)=k not verified
     int n=a.size(),m=b.size();
-    assert(n&&m);
+    if(!n||!m)return {};
     int nm=max(n,m);
     V<mi>_a=a,_b=b;
     _a.resize(nm),_b.resize(nm);
@@ -265,31 +273,17 @@ inline V<mi> poly_inv(const V<mi> &a,int g){ // b=1/a verified with lg4238
     assert(a.size()),assert(a[0].val);
     V<mi>b{1/a[0]};
     mi invg=mi(1)/g,invm=1;
-    int m=1;
+    int lg=0,m=1;
     while(b.size()<a.size()){
         int n=min(a.size(),b.size()<<1);
-        while(m<=n-1<<1)invm*=mod+1>>1,m<<=1;
+        while(m<=n-1<<1)invm*=mod+1>>1,++lg,m<<=1;
         V<mi>c(a.begin(),a.begin()+n);
         b.resize(m),c.resize(m);
-        V<int>bf(m);
-        For(i,m)bf[i]=(bf[i>>1]>>1)|((i&1)?m>>1:0);
-        auto NTT=[&](V<mi> &f,mi coef){
-            For(i,m)if(i<bf[i])swap(f[i],f[bf[i]]);
-            for(int k=1,l=2;k<m;k<<=1,l<<=1){
-                mi wn=coef^((mod-1)/l);
-                for(int i=0;i<m;i+=l){
-                    mi w=1;
-                    For(j,k){
-                        mi x=f[i|j],y=w*f[i|j|k];
-                        f[i|j]=x+y,f[i|j|k]=x-y;
-                        w*=wn;
-                    }
-                }
-            }
-        };
-        NTT(b,g),NTT(c,g);
+        V<mi>wp;
+        NTT(b,g,lg,wp),NTT(c,g,lg,wp);
         For(i,m)b[i]*=2-b[i]*c[i];
-        NTT(b,invg);
+        V<mi>iwp;
+        NTT(b,invg,lg,iwp);
         b.resize(n);
         for(mi &i:b)i*=invm;
     }
@@ -298,7 +292,7 @@ inline V<mi> poly_inv(const V<mi> &a,int g){ // b=1/a verified with lg4238
 
 inline V<mi> poly_diff(const V<mi> &a){ // b=a'
     int n=a.size();
-    assert(n);
+    if(!n)return {};
     if(n==1)return {0};
     V<mi>b(n-1);
     For(i,n-1)b[i]=a[i+1]*(i+1);
@@ -307,7 +301,7 @@ inline V<mi> poly_diff(const V<mi> &a){ // b=a'
 
 inline V<mi> poly_intg(const V<mi> &a){ // b=¡Òa
     int n=a.size();
-    assert(n);
+    if(!n)return {0};
     static V<mi>inv{0,1};
     while(inv.size()<=n)inv.pb((mod-mod/inv.size())*inv[mod%inv.size()]);
     V<mi>b(n+1);
@@ -320,24 +314,20 @@ inline V<mi> poly_ln(const V<mi> &a,int g){ // b=ln(a) verified with lg4725
     int n=a.size();
     assert(n),assert(a[0].val==1);
     V<mi>b=poly_conv_add(poly_diff(a),poly_inv(a,g),g);
-    b.resize(n);
+    b.resize(n-1);
     return poly_intg(b);
 }
 
 inline V<mi> poly_exp(const V<mi> &a,int g){ // b=exp(a) verified with lg4726
-    int n=a.size();
-    assert(n);
+    if(a.empty())return {};
+    assert(!a[0]);
     V<mi>b{1};
-    if(a[0].val){
-        mi e=0,ifac=mod-1;
-        Rep(i,mod)e+=ifac,ifac*=i;
-        b[0]=e^a[0].val; // check that a[0] isnt modulo
-    }
     while(b.size()<a.size()){
-        int m=min(b.size()<<1,a.size());
+        int m=min(a.size(),b.size()<<1);
         b.resize(m);
         V<mi>c=poly_ln(b,g);
-        For(i,m)c[i]=a[i]-c[i];
+        c[0]=-c[0];
+        FOR(i,1,m)c[i]=a[i]-c[i];
         ++c[0];
         b=poly_conv_add(b,c,g);
         b.resize(m);
@@ -346,10 +336,11 @@ inline V<mi> poly_exp(const V<mi> &a,int g){ // b=exp(a) verified with lg4726
 }
 
 inline V<mi> poly_series(const V<mi> &a,mi b0,int g){ // b[i]=¡Æ(b[j]*a[i-j]) for j>0 verified with lg4721
-    assert(a.size());
+    int n=a.size();
+    if(!n)return {};
     V<mi>b=a;
     b[0]=1;
-    FOR(i,1,b.size())b[i]=-b[i];
+    FOR(i,1,n)b[i]=-b[i];
     b=poly_inv(b,g);
     if(b0.val!=1)for(mi &i:b)i*=b0;
     return b;
@@ -357,7 +348,7 @@ inline V<mi> poly_series(const V<mi> &a,mi b0,int g){ // b[i]=¡Æ(b[j]*a[i-j]) fo
 
 inline V<mi> poly_pow(const V<mi> &_a,mi b,int g){ // c=a^(b%mod) verified with lg5245
     int n=_a.size();
-    assert(n);
+    if(!n)return {};
     V<mi>a(n);
     if(!b){
         a[0]=1;
@@ -379,7 +370,8 @@ inline V<mi> poly_pow(const V<mi> &_a,mi b,int g){ // c=a^(b%mod) verified with 
 
 inline V<mi> poly_pow(const V<mi> &_a,ll b,int g){ // c=a^b verified with Library Checker
     int n=_a.size();
-    assert(n);
+    if(!n)return {};
+    assert(b>=0);
     V<mi>a(n);
     if(!b){
         a[0]=1;
@@ -403,14 +395,30 @@ inline V<mi> poly_pow(const V<mi> &_a,ll b,int g){ // c=a^b verified with Librar
     return ret;
 }
 
-inline V<mi> poly_multi_pt(const V<mi> &_a,const V<mi> &b,int g){ // c[i]=a(b[i]) verified with lg5050
-    assert(_a.size());
-    if(b.empty())return {};
-    int n=max(_a.size(),b.size());
-    V<V<mi>>t(n<<2);
+inline pair<V<mi>,V<mi>> poly_div(const V<mi> &a,const V<mi> &b,int g){ // a/b a%b verified with lg4512
+    int n=a.size(),m=b.size();
+    if(n<m)return {{},a};
+    assert(m);
+    V<mi>_a(n-m+1),_b=b;
+    For(i,n-m+1)_a[i]=a[n-1-i];
+    reverse(ALL(_b));
+    _b.resize(n-m+1);
+    _a=poly_conv_add(_a,poly_inv(_b,g),g);
+    _a.resize(n-m+1);
+    reverse(ALL(_a));
+    _b=poly_conv_add(_a,b,g);
+    _b.resize(m-1);
+    For(i,m-1)_b[i]=a[i]-_b[i];
+    return {_a,_b};
+}
+
+inline V<mi> poly_multi_pt(V<mi> a,const V<mi> &b,int g){ // c[i]=a(b[i]) verified with lg5050
+    int n=a.size(),m=b.size();
+    if(!n||!m)return V<mi>(m);
+    V<V<mi>>t(m<<2);
     auto build=[&](auto &&self,int p,int l,int r)->void{
         if(l==r){
-            t[p]={1,l<b.size()?-b[r]:0};
+            t[p]={1,-b[r]};
             return;
         }
         int mid=l+r>>1;
@@ -418,10 +426,14 @@ inline V<mi> poly_multi_pt(const V<mi> &_a,const V<mi> &b,int g){ // c[i]=a(b[i]
         self(self,p<<1|1,mid+1,r);
         t[p]=poly_conv_add(t[p<<1],t[p<<1|1],g);
     };
-    build(build,1,0,n-1);
-    V<mi>ret(b.size());
+    build(build,1,0,m-1);
+    if(n>m){
+        V<mi>c=t[1];
+        reverse(ALL(c));
+        a=poly_div(a,c,g).se;
+    }
+    V<mi>ret(m);
     auto push_down=[&](auto &&self,int p,int l,int r,V<mi> c)->void{
-        if(l>=b.size())return;
         if(l==r){
             ret[l]=c[0];
             return;
@@ -431,14 +443,13 @@ inline V<mi> poly_multi_pt(const V<mi> &_a,const V<mi> &b,int g){ // c[i]=a(b[i]
         self(self,p<<1,l,mid,poly_conv_sub(c,t[p<<1|1],g));
         self(self,p<<1|1,mid+1,r,poly_conv_sub(c,t[p<<1],g));
     };
-    V<mi>a=_a;
-    a.resize(n+1);
-    push_down(push_down,1,0,n-1,poly_conv_sub(a,poly_inv(t[1],g),g));
+    a.resize(m+1);
+    push_down(push_down,1,0,m-1,poly_conv_sub(a,poly_inv(t[1],g),g));
     return ret;
 }
 
 inline V<mi> poly_prod(const V<V<mi>> &a,int g){ // b=¡Ç(a[i])
-    assert(a.size());
+    if(a.empty())return {1};
     auto cmp=[&](const V<mi> &x,const V<mi> &y){return x.size()>y.size();};
     priority_queue<V<mi>,V<V<mi>>,decltype(cmp)>q(cmp);
     for(const auto &i:a)q.push(i);
@@ -450,19 +461,21 @@ inline V<mi> poly_prod(const V<V<mi>> &a,int g){ // b=¡Ç(a[i])
     return q.top();
 }
             
-inline V<mi> poly_multi_pt_sum(const V<mi> &a,int m,int g){ // b[i]=sum(a[j]^i) for i in [0,m]
+inline V<mi> poly_multi_pt_sum(const V<mi> &a,int m,int g){ // b[i]=sum(a[j]^i) for i<m
+    if(!m)return {};
     int n=a.size();
-    assert(n);
-    V<V<mi>>b(max(n,m));
-    For(i,max(n,m))b[i]={1,-a[i]};
-    V<mi>c=poly_ln(poly_prod(b,g),g);
-    c.resize(m+1);
+    if(!n)return V<mi>(m);
+    V<V<mi>>b(n);
+    For(i,n)b[i]={1,-a[i]};
+    V<mi>c=poly_prod(b,g);
+    c.resize(m);
+    c=poly_ln(c,g);
     c[0]=n;
-    FOR(i,1,m+1)c[i]*=mod-i;
+    FOR(i,1,m)c[i]*=mod-i;
     return c;
 }
 
-inline pair<V<mi>,V<mi>> poly_recur(V<mi> a,V<mi> c,int g){ // build P(x)/Q(x) from sum(a^i*c^(k-i))=0 for i in [0,k] verified by lg4723
+inline pair<V<mi>,V<mi>> poly_recur(V<mi> a,V<mi> c,int g){ // build a(x)/b(x) from sum(a^i*c^(k-i))=0 for i<=k verified by lg4723
     int k=a.size();
     assert(k),assert(k+1==c.size());
     assert(c[0].val);
@@ -470,24 +483,25 @@ inline pair<V<mi>,V<mi>> poly_recur(V<mi> a,V<mi> c,int g){ // build P(x)/Q(x) f
     a.resize(k);
     return {a,c};
 }
-inline mi poly_coef(ll m,V<mi> P,V<mi> Q,int g){ // [x^m] P(x)/Q(x) verified by abc436g
-    assert(P.size()&&Q.size()),assert(Q[0].val);
+inline mi poly_coef(ll m,V<mi> a,V<mi> b,int g){ // [x^m] a(x)/b(x) verified by abc436g
+    if(a.empty())return 0;
+    assert(b.size()),assert(b[0].val);
     for(;m;m>>=1){
-        V<mi>R=Q;
-        for(int i=1;i<Q.size();i+=2)R[i]=-R[i];
-        P=poly_conv_add(P,R,g),Q=poly_conv_add(Q,R,g);
+        V<mi>c=b;
+        for(int i=1;i<b.size();i+=2)c[i]=-c[i];
+        a=poly_conv_add(a,c,g),b=poly_conv_add(b,c,g);
         int i;
-        for(i=m&1;i<P.size();i+=2)P[i>>1]=P[i];
-        P.resize(i>>1);
-        if(P.empty())return 0;
-        for(i=0;i<Q.size();i+=2)Q[i>>1]=Q[i];
-        Q.resize(i>>1);
+        for(i=m&1;i<a.size();i+=2)a[i>>1]=a[i];
+        a.resize(i>>1);
+        if(a.empty())return 0;
+        for(i=0;i<b.size();i+=2)b[i>>1]=b[i];
+        b.resize(i>>1);
     }
-    return P[0]/Q[0];
+    return a[0]/b[0];
 }
 
-inline V<mi> bernoulli(int n,int g){ // a[i]=Bernoulli[i]/i!
-    assert(n>0);
+inline V<mi> bernoulli(int n,int g){ // a[i]=Bernoulli[i]/i! for i<n
+    if(!n)return {};
     V<mi>a(n+1);
     a[1]=1;
     a=poly_exp(a,g);
@@ -496,9 +510,8 @@ inline V<mi> bernoulli(int n,int g){ // a[i]=Bernoulli[i]/i!
 }
 
 inline mi poly_intv_sum(V<mi> a,ll l,ll r,int g){ // ¡Æ(a[i]*x^i) for l<=x<=r
-    if(l>r)return 0;
     int n=a.size();
-    assert(n);
+    if(!n||l>r)return 0;
     mi fac=1;
     a.insert(a.begin(),0),++n;
     FOR(i,1,n)a[i]*=fac,fac*=i;
@@ -514,9 +527,8 @@ inline mi poly_intv_sum(V<mi> a,ll l,ll r,int g){ // ¡Æ(a[i]*x^i) for l<=x<=r
 }
 
 inline mi poly_intv_sum(V<mi> a,ll l,ll r){ // ¡Æ(a[i]*x^i) for l<=x<=r
-    if(l>r)return 0;
     int n=a.size();
-    assert(n);
+    if(!n||l>r)return 0;
     V<mi>S{1};
     S.reserve(n-1);
     FOR(i,1,n){
@@ -531,4 +543,79 @@ inline mi poly_intv_sum(V<mi> a,ll l,ll r){ // ¡Æ(a[i]*x^i) for l<=x<=r
     mi cl=1,cr=1,ret=0;
     For(i,n)cl*=l+1-i,cr*=r+1-i,ret+=a[i]*(cr-cl)*inv[i+1];
     return ret;
+}
+
+inline V<V<mi>> poly_conv_add_2d(V<V<mi>> a,V<V<mi>> b,int g){ // c[k][kk]=¡Æ(a[i][ii]*b[j][jj]) for i+j=k and ii+jj=kk verified with lgu107257
+    int n=a.size(),m=b.size(),nn=0,mm=0;
+    For(i,n)ckmax(nn,(int)a[i].size());
+    For(i,m)ckmax(mm,(int)b[i].size());
+    if(!n||!m||!nn||!mm)return {};
+    if(max({n,nn,m,mm})<5){
+        V c(n+m-1,V<mi>(nn+mm-1));
+        For(i,n)For(ii,a[i].size())For(j,m)For(jj,b[j].size())c[i+j][ii+jj]+=a[i][ii]*b[j][jj];
+        return c;
+    }
+    mi invnnmm=1;
+    int llgg=0,nnmm=1;
+    while(nnmm<nn+mm-1)invnnmm*=mod+1>>1,++llgg,nnmm<<=1;
+    V<mi>wp;
+    For(i,n)NTT(a[i],g,llgg,wp);
+    For(i,m)NTT(b[i],g,llgg,wp);
+    mi invnm=1;
+    int lg=0,nm=1;
+    while(nm<n+m-1)invnm*=mod+1>>1,++lg,nm<<=1;
+    a.resize(nm,V<mi>(nnmm)),b.resize(nm,V<mi>(nnmm));
+    V<mi>tmp(nm);
+    For(j,nnmm){
+        For(i,nm)tmp[i]=a[i][j];
+        NTT(tmp,g,lg,wp);
+        For(i,nm)a[i][j]=tmp[i];
+        For(i,nm)tmp[i]=b[i][j];
+        NTT(tmp,g,lg,wp);
+        For(i,nm)b[i][j]=tmp[i];
+    }
+    For(i,nm)For(j,nnmm)a[i][j]*=b[i][j];
+    mi invg=mi(1)/g;
+    V<mi>iwp;
+    For(j,nnmm){
+        For(i,nm)tmp[i]=a[i][j];
+        NTT(tmp,invg,lg,iwp);
+        For(i,n+m-1)a[i][j]=tmp[i]*invnm;
+    }
+    a.resize(n+m-1);
+    For(i,n+m-1){
+        NTT(a[i],invg,llgg,iwp);
+        a[i].resize(nn+mm-1);
+        for(mi &j:a[i])j*=invnnmm;
+    }
+    return a;
+}
+
+inline V<mi> poly_coef_2d(ll m,int k,V<V<mi>> a,V<V<mi>> b,int g){ // [x^m] a(x,y)/b(x,y) mod y^k verified with abc439g
+    if(a.empty()||!k)return V<mi>(k);
+    For(i,a.size())if(a[i].size()>k)a[i].resize(k);
+    assert(b.size()),assert(b[0].size()),assert(b[0][0].val);
+    For(i,b.size())if(b[i].size()>k)b[i].resize(k);
+    for(int n=b.size();m;m>>=1){
+        V<V<mi>>c=b;
+        for(int i=1;i<c.size();i+=2)for(mi &j:c[i])j=-j;
+        a=poly_conv_add_2d(a,c,g),b=poly_conv_add_2d(b,c,g);
+        int i;
+        for(i=m&1;i<a.size();i+=2){
+            if(a[i].size()>k)a[i].resize(k);
+            a[i>>1]=a[i];
+        }
+        n=n+1>>1;
+        a.resize(min(i>>1,n));
+        if(a.empty())return V<mi>(k);
+        for(i=0;i<b.size();i+=2){
+            if(b[i].size()>k)b[i].resize(k);
+            b[i>>1]=b[i];
+        }
+        b.resize(min(i>>1,n));
+    }
+    b[0].resize(k);
+    a[0]=poly_conv_add(a[0],poly_inv(b[0],g),g);
+    a[0].resize(k);
+    return a[0];
 }
