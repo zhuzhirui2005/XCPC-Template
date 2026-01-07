@@ -429,3 +429,67 @@ inline bool contf_cmp(T x1,T y1,T x2,T y2){
     }
     return u.size()<v.size();
 }
+
+inline bool miller_rabin(ull n){
+    if(n<4)return n>1;
+    static const ull bs[]{2,325,9375,28178,450775,9780504,1795265022};
+    int z=__builtin_ctzll(n-1);
+    for(ull i:bs){
+        if(!(i%n))continue;
+        ull j=1;
+        for(ull k=n-1>>z;k;i=(__uint128_t)i*i%n,k>>=1){
+            if((i==1||i==n-1)&&(j==1||j==n-1))goto skip;
+            if(k&1){
+                if(!i)return false;
+                j=(__uint128_t)j*i%n;
+            }
+        }
+        if(j==1||j==n-1)continue;
+        FOR(_,1,z){
+            j=(__uint128_t)j*j%n;
+            if(j==n-1)goto skip;
+        }
+        return false;
+        skip:;
+    }
+    return true;
+}
+
+inline ull pollard_rho(ull n){ // n must not be prime
+    assert(n>3);
+    if(!(n&1))return 2;
+    uniform_int_distribution<ull>rg0(0,n-1),rg1(1,n-1);
+    static mt19937_64 rnd(chrono::high_resolution_clock::now().time_since_epoch().count());
+    while(true){
+        ull x=rg0(rnd),y=x,z=rg1(rnd);
+        auto f=[&](ull &k){
+            k=(__uint128_t)k*k%n;
+            if((k+=z)>=n)k-=n;
+        };
+        while(true){
+            f(x),f(y),f(y);
+            if(x==y)break;
+            ull w=gcd(x>y?x-y:y-x,n);
+            if(w>1)return w;
+        }
+    }
+}
+
+inline V<pair<ull,int>> factorize(ull n){
+    if(n<2)return {};
+    if(miller_rabin(n))return {{n,1}};
+    int c=0;
+    ull m=pollard_rho(n);
+    do ++c,n/=m;while(n%m==0);
+    V<pair<ull,int>>x=factorize(n),y=factorize(m),z;
+    for(auto &[_,k]:y)k*=c;
+    int i=0,j=0;
+    while(i<x.size()&&j<y.size()){
+        if(x[i].fi==y[j].fi)z.eb(x[i].fi,x[i].se+y[j].se),++i,++j;
+        else if(x[i].fi<y[j].fi)z.pb(x[i++]);
+        else z.pb(y[j++]);
+    }
+    if(i<x.size())z.insert(z.end(),x.begin()+i,x.end());
+    else if(j<y.size())z.insert(z.end(),y.begin()+j,y.end());
+    return z;
+}
