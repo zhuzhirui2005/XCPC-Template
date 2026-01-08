@@ -166,3 +166,60 @@ namespace _Uncategorized_5{
         return ret;
     }
 }
+
+namespace _Uncategorized_6{
+    // wqs 二分 + 斜率优化 DP
+    inline ll solve(int n,int m,V<int> a){
+        // 数轴上 n 个位置选 m 个位置，使得每个位置到最近的选中位置的距离之和最小
+        ll ans=infl;
+        V<pli>f(n+1),g(n+1);
+        V<ll>s(n+1);
+        /*
+        f_i = g_j + (i - j) * a_i - (s_i - s_j)
+        f_i = (-a_i * j) + (g_j + s_j) + (i * a_i - s_i)
+
+        g_i = f_j + (s_i - s_j) - (i - j) * a_j + k
+        g_i = (-i * a_j) + (f_j - s_j + j * a_j) + (s_i + k)
+        */
+        auto check=[&](ll k){
+            dq<int>p,q;
+            f[0]={infl,-1},q.pb(0);
+            FOR(i,1,n+1){
+                auto getf=[&](int j){return pli(g[j].fi+1ll*(i-j)*a[i]-(s[i]-s[j]),g[j].se);};
+                while(q.n>1&&getf(q[0])>=getf(q[1]))q.qf();
+                f[i]=getf(q[0]);
+                auto fy=[&](int j){return f[j].fi-s[j]+1ll*j*a[j];};
+                while(p.n>1){
+                    __int128 x=__int128(fy(i)-fy(p[p.n-1]))*(a[p[p.n-1]]-a[p[p.n-2]]),y=__int128(fy(p[p.n-1])-fy(p[p.n-2]))*(a[i]-a[p[p.n-1]]);
+                    if(x<y||(x==y&&f[i].se<=f[p[p.n-1]].se))p.qb();
+                    else break;
+                }
+                p.pb(i);
+                auto getg=[&](int j){return pli(f[j].fi+(s[i]-s[j])-1ll*(i-j)*a[j]+k,f[j].se+1);};
+                while(p.n>1&&getg(p[0])>=getg(p[1]))p.qf();
+                g[i]=getg(p[0]);
+                auto gy=[&](int j){return g[j].fi+s[j];};
+                while(q.n>1){
+                    __int128 x=__int128(gy(i)-gy(q[q.n-1]))*(q[q.n-1]-q[q.n-2]),y=__int128(gy(q[q.n-1])-gy(q[q.n-2]))*(i-q[q.n-1]);
+                    if(x<y||(x==y&&g[i].se<=g[q[q.n-1]].se))q.qb();
+                    else break;
+                }
+                q.pb(i);
+            }
+            if(g[n].se>m)return false;
+            ans=g[n].fi-1ll*m*k;
+            return true;
+        };
+        sort(ALL(a));
+        ll l=0,r=accumulate(ALL(a),0ll,[&](ll x,int y){return x+abs(y-a[n-1>>1]);}); // 这里不能用 reduce
+        a.insert(a.begin(),-inf);
+        FOR(i,1,n+1)s[i]=s[i-1]+a[i];
+        while(l<=r){
+            ll mid=l+r>>1;
+            if(check(mid))r=mid-1;
+            else l=mid+1;
+        }
+        assert(ans<infl);
+        return ans;
+    }
+}
