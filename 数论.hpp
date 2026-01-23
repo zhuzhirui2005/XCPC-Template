@@ -6,7 +6,7 @@ T exgcd(const T &a,const T &b,T &x,T &y){
     T g=exgcd(b,a%b,y,x);
     y-=a/b*x;
     return g;
-};
+}
 template<class T>
 inline T inv_exgcd(T n,T p=mod){
     // n*inv = 1 (mod p)
@@ -16,17 +16,46 @@ inline T inv_exgcd(T n,T p=mod){
     exgcd(n,p,inv,tmp);
     return inv<0?inv+p:inv;
 }
+
+template<class T>
+struct pyrange{
+    T k,l,r; // node that k > 0, [l, r] but not [l, r)
+    inline pyrange(T r=-1):k(1),l(0),r(r){}
+    inline pyrange(T l,T r):k(1),l(l),r(r){}
+    inline pyrange(T l,T r,T k):k(k),l(l),r(r){assert(k>0);}
+    inline void solve(T a,T b,T c){ // init by solve ax+by=c
+        assert(b); // if b = 0 then may k = 0
+        T tmp,g=exgcd(a,b,l,tmp);
+        if(!g||c%g){
+            k=1,l=0,r=-1;
+            return;
+        }
+        k=abs(b/g),r=(l*=c/g);
+    }
+    inline T count(){return r<l?0:1+(r-l)/k;}
+    inline T first(){assert(l<=r);return l;}
+    inline T last(){assert(l<=r);return l+(r-l)/k*k;}
+    inline pyrange extend(T L,T R){return {l>L?l-(l-L+k-1)/k*k:l,max(r,R),k};} // [L, R] in [l, r]
+    inline pyrange slice(T L,T R){return {l<L?l+(L-l+k-1)/k*k:l,min(r,R),k};} // [l, r] in [L, R]
+    inline pyrange operator&(const pyrange &rhs){
+        T L=max(l,rhs.l),R=min(r,rhs.r);
+        if(L>R)return {};
+        T g=gcd(k,rhs.k);
+        if((l-rhs.l)%g)return {};
+        T a=k/g,b=rhs.k/g,c=(rhs.l-l)/g*inv_exgcd(a%b,b)%b;
+        if(c<0)c+=b;
+        T m=a*rhs.k,x=l+c*k;
+        if(x<L)x+=(L-x+m-1)/m*m;
+        else x-=(x-L)/m*m;
+        return {x,R,m};
+    }
+};
+
 template<class T>
 inline ll exCRT(const V<T> &a,const V<T> &m){
     int n=a.size();
     assert(n==m.size());
     For(i,n)assert(0<=a[i]&&0<m[i]);
-    function<ll(ll,ll,ll)>mul=[&](ll x,ll y,ll p=mod){
-        ll z=0;
-        auto add=[&](ll x,ll y){return x+y>=p?x+y-p:x+y;};
-        for(x%=p;y;x=add(x,x),y>>=1)(y&1)&&(z=add(z,x));
-        return z;
-    };
     ll md=m[0],ret=a[0],x,y;
     FOR(i,1,n){
         ll g=exgcd(md,(ll)m[i],x,y),res=a[i]-ret%m[i];
@@ -34,7 +63,7 @@ inline ll exCRT(const V<T> &a,const V<T> &m){
         if(res%g)return -1;
         ll mg=m[i]/g;
         if(x<0)x+=m[i];
-        ret+=(x=mul(x,res/g,mg))*md;
+        ret+=(x=(__int128)x*(res/g)%mg)*md;
         ret%=(md*=mg);
         if(ret<0)ret+=md;
     }
@@ -52,6 +81,8 @@ struct comb_table{
         Rep(i,n)ifac[i]=ifac[i+1]*(i+1);
     }
     inline mi C(int x,int y){return x<y||y<0?0:fac[x]*ifac[y]*ifac[x-y];}
+    inline mi inv(int k){return ifac[k]*fac[k-1];}
+    inline mi catalan(int n,int m=1,int p=2){return C(n*p+m,n)*m*inv(n*p+m);}
 };
 
 struct pri_table{
@@ -492,4 +523,28 @@ inline V<pair<ull,int>> factorize(ull n){
     if(i<x.size())z.insert(z.end(),x.begin()+i,x.end());
     else if(j<y.size())z.insert(z.end(),y.begin()+j,y.end());
     return z;
+}
+
+inline mi hanoi(ll n,int m=3,bool adj=false){
+    if(!n)return 0;
+    assert(m==3||(!adj&&m==4));
+    if(m==3)return (mi(2+adj)^(n%(mod-1)))-1;
+    else{
+        ll k=sqrtl((n<<1)+.25)-.5;
+        return (n-(k*(k-1)>>1)-1)*(mi(2)^(k%(mod-1)))+1;
+    }
+}
+inline ll frame_stewart(int n,int m=3){
+    if(!n)return 0;
+    assert(m>2);
+    if(m==3)return (1ll<<n)-1;
+    else if(m==4){
+        int k=sqrt((n<<1)+.25)-.5;
+        return (ll(n-(k*(k-1)>>1)-1)<<k)+1;
+    }
+    else{
+        ll ret=infl;
+        For(i,n)ckmin(ret,(frame_stewart(i,m)<<1)+frame_stewart(n-i,m-1));
+        return ret;
+    }
 }

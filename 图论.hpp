@@ -1,23 +1,3 @@
-inline V<ll> bfs01(int n,int s,const V<V<pii>> &to){
-    assert(0<=n),assert(0<=s),assert(s<n),assert(to.size()<=n);
-    for(const V<pii> &i:to)
-        for(const pii &j:i)
-            assert(0<=min(j.fi,j.se)),assert(j.fi<n);
-    V<ll>dis(n,infl);
-    dis[s]=0;
-    deque<int>q;
-    q.pb(s);
-    V<bool>vis(n); // added vis to prevent an obvious error
-    while(q.size()){
-        int p=q.front();q.qf();
-        if(vis[p])continue;
-        vis[p]=true;
-        for(const pii &i:to[p])if(ckmin(dis[i.fi],dis[p]+i.se))i.se?q.pb(i.fi):q.pf(i.fi);
-    }
-    for(ll &i:dis)if(i==infl)i=-1;
-    return dis;
-}
-
 template<class T>
 inline V<ll> dijkstra(int n,int s,const V<V<pair<int,T>>> &to,ll null=-1){
     V<ll>dis(n,infl);
@@ -448,4 +428,33 @@ inline tuple<int,ll,V<int>> clique(int n,const V<ull> &to){
         e[i]=(~to[i]&((1ull<<n)-1))^(1ull<<i);
     }
     return indpset(n,e);
+}
+
+inline pii centroid(int n,const V<array<int,3>> &e){ // return [vertex if w = 0 else edge, 2w]
+    V d(n,V<ll>(n,infl));
+    For(i,n)d[i][i]=0;
+    for(const auto &[u,v,w]:e){
+        assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
+        ckmin(d[u][v],(ll)w),ckmin(d[v][u],(ll)w);
+    }
+    For(k,n)For(i,n)if(i!=k)For(j,n)if(i!=j&&j!=k)ckmin(d[i][j],d[i][k]+d[k][j]);
+    V rk(n,V<int>(n));
+    For(i,n){
+        iota(ALL(rk[i]),0);
+        sort(ALL(rk[i]),[&](int x,int y){return d[i][x]>d[i][y];});
+    }
+    ll mn=infl<<1;
+    pii ret{-1,-1};
+    For(i,n)if(ckmin(mn,d[i][rk[i][0]]<<1))ret={i,0};
+    For(i,e.size()){
+        const auto &[u,v,w]=e[i];
+        int j=rk[u][0];
+        for(int k:rk[u])if(d[v][k]>d[v][j]){
+            ll x=(ll)d[u][k]+w+d[v][j],y=x-(d[u][k]<<1);
+            if(mn>x)mn=x,ret={i,y};
+            else if(mn==x&&0<y&&y<w<<1)ret={i,y};
+            j=k;
+        }
+    }
+    return ret;
 }

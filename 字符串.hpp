@@ -250,3 +250,48 @@ inline V<int> ntt_match(const string &s,const string &t,int g,char wc='*'){
     For(i,n-m+1)if(!a[i])ret.pb(i);
     return ret;
 }
+
+struct eertree{
+    V<int>d,fail,len,link;
+    int lst;
+    V<array<int,26>>nxt;
+    string s;
+    inline eertree():d(2),fail(2),len{-1,0},link(2),lst(1),nxt{{},{}}{}
+    inline bool extend(char c){
+        int pos=s.size();
+        s+=c,c-='a';
+        while(pos<len[lst]+1||s[pos-1-len[lst]]!=s[pos])lst=fail[lst];
+        if(!nxt[lst][c]){
+            len.pb(len[lst]+2),nxt[lst][c]=nxt.size();
+            if(len.back()>1){
+                for(lst=fail[lst];pos<len[lst]+1||s[pos-1-len[lst]]!=s[pos];lst=fail[lst]);
+                fail.pb(nxt[lst][c]);
+            }
+            else fail.pb(1);
+            d.pb(len.back()-len[fail.back()]),link.pb(d.back()>d[fail.back()]?fail.back():link[fail.back()]),lst=nxt.size(),nxt.pb({});
+            return true;
+        }
+        else{
+            lst=nxt[lst][c];
+            return false;
+        }
+    }
+    inline eertree(const string &t):eertree(){for(char c:t)extend(c);}
+};
+template<class T>
+inline V<int> minpal(const T &s){
+    eertree e;
+    V<int>f{0},g(2);
+    int n=s.size();
+    f.reserve(n);
+    for(char c:s){
+        int i=f.size();f.pb(inf);
+        if(e.extend(c))g.pb(inf);
+        for(int j=e.lst;j>1;j=e.link[j]){
+            g[j]=f[i-e.d[j]-e.len[e.link[j]]];
+            if(e.fail[j]!=e.link[j])ckmin(g[j],g[e.fail[j]]);
+            ckmin(f.back(),g[j]+1);
+        }
+    }
+    return f;
+}
