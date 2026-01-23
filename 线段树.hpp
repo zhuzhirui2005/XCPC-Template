@@ -202,3 +202,78 @@ struct ODT{
         return it!=p.end()&&it->se<=r;
     }
 };
+
+template<class T,T e,class U=less<T>>
+struct lichao{
+    U cmp;
+    T l,r;
+    struct LCT{
+        LCT *ls,*rs;
+        pair<T,T>v;
+        inline LCT(T k=0,T b=e):ls(nullptr),rs(nullptr),v(k,b){}
+    }*rt;
+    inline lichao(T l,T r,const U &cmp=U()):cmp(cmp),l(l),r(r),rt(nullptr){}
+    void insert(LCT *&p,T l,T r,pair<T,T> v){
+        if(!p){
+            p=new LCT(v.fi,v.se);
+            return;
+        }
+        T mid=l+(r-l>>1);
+        if(cmp(v.fi*mid+v.se,p->v.fi*mid+p->v.se))swap(v,p->v);
+        if(l==r)return;
+        if(cmp(v.fi*l+v.se,p->v.fi*l+p->v.se))insert(p->ls,l,mid,v);
+        else if(cmp(v.fi*r+v.se,p->v.fi*r+p->v.se))insert(p->rs,mid+1,r,v);
+    }
+    inline void insert(const pair<T,T> &v){insert(rt,l,r,v);}
+    T query(LCT *p,T l,T r,T x){
+        if(!p)return e;
+        T ret=p->v.fi*x+p->v.se;
+        if(l==r)return ret;
+        T mid=l+(r-l>>1);
+        return min(ret,x<=mid?query(p->ls,l,mid,x):query(p->rs,mid+1,r,x),cmp);
+    }
+    inline T query(T x){return query(rt,l,r,x);}
+};
+
+template<class T>
+struct wavelet{
+    T l,r;
+    wavelet *ls,*rs;
+    V<int>pre;
+    inline wavelet(T l,T r):l(l),r(r),ls(nullptr),rs(nullptr){}
+    wavelet(T l,T r,typename V<T>::iterator ql,typename V<T>::iterator qr):wavelet(l,r){
+        if(l==r)return;
+        T mid=l+r>>1;
+        pre.reserve(qr-ql);
+        for(auto it=ql;it!=qr;++it)pre.pb((pre.size()?pre.back():0)+(*it<=mid));
+        auto qm=stable_partition(ql,qr,[&](T k){return k<=mid;});
+        if(ql<qm)ls=new wavelet(l,mid,ql,qm);
+        if(qm<qr)rs=new wavelet(mid+1,r,qm,qr);
+    }
+    void append(T k){
+        if(l==r)return;
+        T mid=l+r>>1;
+        if(k<=mid){
+            pre.pb(pre.size()?pre.back()+1:1);
+            if(!ls)ls=new wavelet(l,mid);
+            ls->append(k);
+        }
+        else{
+            pre.pb(pre.size()?pre.back():0);
+            if(!rs)rs=new wavelet(mid+1,r);
+            rs->append(k);
+        }
+    }
+    T kth(int ql,int qr,int k){ // 0-indexed
+        if(l==r)return l;
+        int cl=ql?pre[ql-1]:0,cr=pre[qr];
+        return cr-cl>k?ls->kth(cl,cr-1,k):rs->kth(ql-cl,qr-cr,k-(cr-cl));
+    }
+    int count(int ql,int qr,T k){
+        if(ql>qr||k<l)return 0;
+        if(r<=k)return qr-ql+1;
+        int cl=ql?pre[ql-1]:0,cr=pre[qr];
+        return (ls?ls->count(cl,cr-1,k):0)+(rs?rs->count(ql-cl,qr-cr,k):0);
+    }
+    int count(int ql,int qr,T x,T y){return count(ql,qr,y)-count(ql,qr,x-1);}
+};

@@ -1,25 +1,3 @@
-inline V<V<int>> graph(int n,const V<V<int>> &e,int dir=1,int d=0){
-    assert(0<=n);
-    V<V<int>>to(n);
-    for(const V<int> &i:e){
-        assert(i.size()==2),assert(0<=min(i[0]-d,i[1]-d)),assert(max(i[0]-d,i[1]-d)<n);
-        if(dir&1)to[i[0]-d].push_back(i[1]-d);
-        if(dir&2)to[i[1]-d].push_back(i[0]-d);
-    }
-    return to;
-}
-
-inline V<V<pii>> graphw(int n,const V<V<int>> &e,int dir=1,int d=0){
-    assert(0<=n);
-    V<V<pii>>to(n);
-    for(const V<int> &i:e){
-        assert(i.size()==3),assert(0<=min(i[0]-d,i[1]-d)),assert(max(i[0]-d,i[1]-d)<n);
-        if(dir&1)to[i[0]-d].emplace_back(i[1]-d,i[2]);
-        if(dir&2)to[i[1]-d].emplace_back(i[0]-d,i[2]);
-    }
-    return to;
-}
-
 template<class T>
 inline V<V<int>> delw(const V<V<pair<int,T>>> &_to){
     V<V<int>>to(_to.size());
@@ -28,69 +6,6 @@ inline V<V<int>> delw(const V<V<pair<int,T>>> &_to){
         For(j,_to[i].size())to[i][j]=_to[i][j].fi;
     }
     return to;
-}
-
-inline V<int> bfs(int n,int s,const V<V<int>> &to){
-    assert(0<=n),assert(0<=s),assert(s<n),assert(to.size()<=n);
-    V<int>dis(n,-1);
-    dis[s]=0;
-    queue<int>q;
-    q.push(s);
-    while(q.size()){
-        int p=q.front();q.pop();
-        for(int i:to[p])if(!~dis[i])dis[i]=dis[p]+1,q.push(p);
-    }
-    return dis;
-}
-
-inline V<ll> bfs01(int n,int s,const V<V<pii>> &to){
-    assert(0<=n),assert(0<=s),assert(s<n),assert(to.size()<=n);
-    for(const V<pii> &i:to)
-        for(const pii &j:i)
-            assert(0<=min(j.fi,j.se)),assert(j.fi<n);
-    V<ll>dis(n,infl);
-    dis[s]=0;
-    deque<int>q;
-    q.pb(s);
-    V<bool>vis(n); // added vis to prevent an obvious error
-    while(q.size()){
-        int p=q.front();q.qf();
-        if(vis[p])continue;
-        vis[p]=true;
-        for(const pii &i:to[p])if(ckmin(dis[i.fi],dis[p]+i.se))i.se?q.pb(i.fi):q.pf(i.fi);
-    }
-    for(ll &i:dis)if(i==infl)i=-1;
-    return dis;
-}
-
-template<class T>
-inline V<V<int>> bfs2d(int n,int m,int sx,int sy,const V<V<T>> &grid,const T &can){
-    V<V<int>>dis(n,V<int>(m,-1));
-    dis[sx][sy]=0;
-    queue<pii>q;
-    q.emplace(sx,sy);
-    while(q.size()){
-        auto [x,y]=q.front();q.pop();
-        For(i,4){
-            int mx=x+dir[i][0],my=y+dir[i][1];
-            if(mx>=0&&mx<n&&my>=0&&my<m&&grid[mx][my]==can&&dis[mx][my]==-1)dis[mx][my]=dis[x][y]+1,q.emplace(mx,my);
-        }
-    }
-    return dis;
-}
-template<class T>
-inline V<V<int>> bfs2d_multi(int n,int m,V<pii>s,const V<V<T>> &grid,const T &can){
-    V<V<int>>dis(n,V<int>(m,-1));
-    queue<pii>q;
-    for(const auto &i:s)dis[i.fi][i.se]=0,q.push(i);
-    while(q.size()){
-        auto [x,y]=q.front();q.pop();
-        For(i,4){
-            int mx=x+dir[i][0],my=y+dir[i][1];
-            if(mx>=0&&mx<n&&my>=0&&my<m&&grid[mx][my]==can&&dis[mx][my]==-1)dis[mx][my]=dis[x][y]+1,q.emplace(mx,my);
-        }
-    }
-    return dis;
 }
 
 template<class T>
@@ -556,4 +471,33 @@ inline tuple<int,ll,V<int>> clique(int n,const V<ull> &to){
         e[i]=(~to[i]&((1ull<<n)-1))^(1ull<<i);
     }
     return indpset(n,e);
+}
+
+inline pii centroid(int n,const V<array<int,3>> &e){ // return [vertex if w = 0 else edge, 2w]
+    V d(n,V<ll>(n,infl));
+    For(i,n)d[i][i]=0;
+    for(const auto &[u,v,w]:e){
+        assert(0<=u),assert(u<n),assert(0<=v),assert(v<n);
+        ckmin(d[u][v],(ll)w),ckmin(d[v][u],(ll)w);
+    }
+    For(k,n)For(i,n)if(i!=k)For(j,n)if(i!=j&&j!=k)ckmin(d[i][j],d[i][k]+d[k][j]);
+    V rk(n,V<int>(n));
+    For(i,n){
+        iota(ALL(rk[i]),0);
+        sort(ALL(rk[i]),[&](int x,int y){return d[i][x]>d[i][y];});
+    }
+    ll mn=infl<<1;
+    pii ret{-1,-1};
+    For(i,n)if(ckmin(mn,d[i][rk[i][0]]<<1))ret={i,0};
+    For(i,e.size()){
+        const auto &[u,v,w]=e[i];
+        int j=rk[u][0];
+        for(int k:rk[u])if(d[v][k]>d[v][j]){
+            ll x=(ll)d[u][k]+w+d[v][j],y=x-(d[u][k]<<1);
+            if(mn>x)mn=x,ret={i,y};
+            else if(mn==x&&0<y&&y<w<<1)ret={i,y};
+            j=k;
+        }
+    }
+    return ret;
 }

@@ -25,7 +25,7 @@ struct LB{
         return true;
     }
     inline T mx(T k=0){
-        Rep(i,n)ckmax(k,k^d[i]);
+        Rep(i,n)if(!(k>>i&1))k^=d[i];
         return k;
     }
     inline LB operator+(const LB &rhs){
@@ -40,7 +40,10 @@ struct LB{
         return *this;
     }
     // assumed that empty set isn't allowed
-    inline T count(){return (T(1)<<cnt)-!failed;}
+    inline auto count(){
+        // 0 means empty if failed is false, else full
+        return (cnt?make_unsigned_t<T>(2)<<cnt-1:1)-!failed;
+    }
     // 0-indexed
     inline T rk(T k){
         T pw2=1,ret=0;
@@ -48,7 +51,7 @@ struct LB{
             if(k>>i&1)ret|=pw2;
             pw2<<=1;
         }
-        return ret;
+        return ret-!failed;
     }
     inline T at(T k){
         if(!failed)++k;
@@ -89,7 +92,7 @@ struct LB_ts{ // timestamp
         return true;
     }
     inline T mx(T k=0,int tm=0){
-        Rep(i,n)if(t[i]>=tm)ckmax(k,k^d[i]);
+        Rep(i,n)if(t[i]>=tm&&!(k>>i&1))k^=d[i];
         return k;
     }
     inline LB_ts operator+(const LB_ts &rhs){
