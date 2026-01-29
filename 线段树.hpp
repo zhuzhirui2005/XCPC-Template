@@ -236,32 +236,44 @@ struct lichao{
 };
 
 template<class T>
-struct wavelet{
+struct dynamic_wavelet{
     T l,r;
-    wavelet *ls,*rs;
+    dynamic_wavelet *ls,*rs;
     V<int>pre;
-    inline wavelet(T l,T r):l(l),r(r),ls(nullptr),rs(nullptr){}
-    wavelet(T l,T r,typename V<T>::iterator ql,typename V<T>::iterator qr):wavelet(l,r){
+    inline dynamic_wavelet(T l,T r):l(l),r(r),ls(nullptr),rs(nullptr){}
+    dynamic_wavelet(T l,T r,typename V<T>::iterator ql,typename V<T>::iterator qr):dynamic_wavelet(l,r){
         if(l==r)return;
         T mid=l+r>>1;
         pre.reserve(qr-ql);
         for(auto it=ql;it!=qr;++it)pre.pb((pre.size()?pre.back():0)+(*it<=mid));
-        auto qm=stable_partition(ql,qr,[&](T k){return k<=mid;});
-        if(ql<qm)ls=new wavelet(l,mid,ql,qm);
-        if(qm<qr)rs=new wavelet(mid+1,r,qm,qr);
+        auto qm=stable_partition(ql,qr,[&](T k){return k<=mid;}); // this will modify arg arr
+        if(ql<qm)ls=new dynamic_wavelet(l,mid,ql,qm);
+        if(qm<qr)rs=new dynamic_wavelet(mid+1,r,qm,qr);
     }
     void append(T k){
         if(l==r)return;
         T mid=l+r>>1;
         if(k<=mid){
             pre.pb(pre.size()?pre.back()+1:1);
-            if(!ls)ls=new wavelet(l,mid);
+            if(!ls)ls=new dynamic_wavelet(l,mid);
             ls->append(k);
         }
         else{
             pre.pb(pre.size()?pre.back():0);
-            if(!rs)rs=new wavelet(mid+1,r);
+            if(!rs)rs=new dynamic_wavelet(mid+1,r);
             rs->append(k);
+        }
+    }
+    void pop(){
+        if(pre.empty())return;
+        int lst=pre.back();pre.qb();
+        if((pre.size()?pre.back():0)<lst){
+            ls->pop();
+            if(ls->l<ls->r&&ls->pre.empty())ls=nullptr;
+        }
+        else{
+            rs->pop();
+            if(rs->l<rs->r&&rs->pre.empty())rs=nullptr;
         }
     }
     T kth(int ql,int qr,int k){ // 0-indexed
@@ -276,4 +288,45 @@ struct wavelet{
         return (ls?ls->count(cl,cr-1,k):0)+(rs?rs->count(ql-cl,qr-cr,k):0);
     }
     int count(int ql,int qr,T x,T y){return count(ql,qr,y)-count(ql,qr,x-1);}
+};
+
+template<class T,int n>
+struct wavelet{
+    static_assert(n>0);
+    static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
+    array<int,n>p;
+    array<V<pair<ull,int>>,n>t;
+    inline wavelet(V<T> &v){
+        for(T i:v)assert(i>=0);
+        int m=v.size();
+        Rep(i,n){
+            t[i].resize((m>>6)+1);
+            For(j,m)if(!(v[j]>>i&1))t[i][j>>6].fi|=1ull<<(j&63);
+            FOR(j,1,(m>>6)+1)t[i][j].se=t[i][j-1].se+__builtin_popcountll(t[i][j-1].fi);
+            p[i]=stable_partition(ALL(v),[&](T k){return !(k>>i&1);})-v.begin(); // this will modify arg arr
+        }
+    }
+    inline int get(int i,int k){ // [0, k)
+        return t[i][k>>6].se+__builtin_popcountll(t[i][k>>6].fi&((1ull<<(k&63))-1));
+    } 
+    inline T kth(int ql,int qr,int k){ // 0-indexed
+        T ret=0;
+        Rep(i,n){
+            int cl=get(i,ql),cr=get(i,qr+1);
+            if(cr-cl>k)ql=cl,qr=cr-1;
+            else k-=cr-cl,ql+=p[i]-cl,qr+=p[i]-cr,ret|=T(1)<<i;
+        }
+        return ret;
+    }
+    inline int count(int ql,int qr,T k){
+        int ret=0;
+        Rep(i,n){
+            if(ql>qr)break;
+            int cl=get(i,ql),cr=get(i,qr+1);
+            if(k>>i&1)ql+=p[i]-cl,qr+=p[i]-cr,ret+=cr-cl;
+            else ql=cl,qr=cr-1;
+        }
+        return ret+(ql>qr?0:qr-ql+1);
+    }
+    inline int count(int ql,int qr,T x,T y){return count(ql,qr,y)-(x?count(ql,qr,x-1):0);}
 };
