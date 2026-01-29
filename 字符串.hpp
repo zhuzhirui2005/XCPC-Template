@@ -155,7 +155,7 @@ inline V<int> get_ext(const V<int> &z,const string &s,const string &t){
     return ext;
 }
 
-inline tuple<V<int>,V<int>> suffix_array(const string &s,int m=128){
+inline pair<V<int>,V<int>> suffix_array(const string &s,int m=128){
     int n=s.size();
     V<int>cnt(m),id(n),rk(n),sa(n),tmp(n);
     if(n==1)return {rk,sa};
@@ -294,4 +294,45 @@ inline V<int> minpal(const T &s){
         }
     }
     return f;
+}
+
+template<template<class> class T=RMQ>
+inline V<array<int,3>> runs(const string &s,int m=128){
+    int n=s.size();
+    string r=s,t=s;
+    reverse(ALL(r));
+    for(char &c:t)c=m-1-c;
+    auto [rkr,sar]=suffix_array(r,m);
+    auto [rks,sas]=suffix_array(s,m);
+    auto [rkt,sat]=suffix_array(t,m);
+    V<int>htr=get_ht(r,rkr,sar),hts=get_ht(s,rks,sas);
+    T<int>rmqr(htr),rmqs(hts);
+    auto lcp=[&](int x,int y){
+        if(x==y)return n-x;
+        x=rks[x],y=rks[y];
+        if(x>y)swap(x,y);
+        return rmqs.query(x,y-1);
+    };
+    auto lcs=[&](int x,int y){
+        if(x==y)return x+1;
+        x=rkr[n-1-x],y=rkr[n-1-y];
+        if(x>y)swap(x,y);
+        return rmqr.query(x,y-1);
+    };
+    V<array<int,3>>ret;
+    auto calc=[&](const V<int> &rk){
+        V<int>st;
+        Rep(i,n){
+            while(st.size()&&rk[i]<rk[st.back()])st.qb();
+            if(st.size()){
+                int j=st.back(),l=lcs(i,j),r=lcp(i,j);
+                if(l+r>j-i)ret.pb({i-l+1,j+r-1,j-i});
+            }
+            st.pb(i);
+        }
+    };
+    calc(rks),calc(rkt);
+    sort(ALL(ret));
+    ret.erase(unique(ALL(ret)),ret.end());
+    return ret;
 }

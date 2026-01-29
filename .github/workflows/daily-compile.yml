@@ -31,6 +31,7 @@ jobs:
             "modint.hpp:poly.hpp"
             "poly.hpp:字符串.hpp"
             "离散化.hpp:字符串.hpp"
+            "RMQ.hpp:字符串.hpp"
             "树状数组.hpp:vector.hpp"
             "离散化.hpp:树.hpp"
             "dq.hpp:杂项.hpp"
