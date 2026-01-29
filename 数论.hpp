@@ -82,7 +82,7 @@ struct comb_table{
     }
     inline mi C(int x,int y){return x<y||y<0?0:fac[x]*ifac[y]*ifac[x-y];}
     inline mi inv(int k){return ifac[k]*fac[k-1];}
-    inline mi catalan(int n,int m=1,int p=2){return C(n*p+m,n)*m*inv(n*p+m);}
+    inline mi catalan(int n,int m=1,int p=2){return C(n*p+m,n)*m*inv(n*p+m);} // [z^n]C_p(z)^m where C_p(z) = 1 + zC_p(z)^p
 };
 
 struct pri_table{

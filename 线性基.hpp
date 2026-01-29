@@ -1,11 +1,10 @@
 template<class T,int n>
 struct LB{
+    static_assert(n>0);
+    static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
     int cnt,failed;
     V<T>d;
-    inline LB():cnt(0),failed(0),d(n){
-        static_assert(n>0);
-        static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
-    }
+    inline LB():cnt(0),failed(0),d(n){}
     inline bool insert(T k){
         Rep(i,n)if(k>>i&1){
             if(!d[i]){
