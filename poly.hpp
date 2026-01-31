@@ -461,7 +461,7 @@ inline V<mi> poly_prod(const V<V<mi>> &a,int g){ // b=¡Ç(a[i])
     return q.top();
 }
             
-inline V<mi> poly_multi_pt_sum(const V<mi> &a,int m,int g){ // b[i]=sum(a[j]^i) for i<m
+inline V<mi> poly_multi_pt_sum(const V<mi> &a,int m,int g){ // b[i]=¡Æ(a[j]^i) for i<m
     if(!m)return {};
     int n=a.size();
     if(!n)return V<mi>(m);
@@ -475,7 +475,7 @@ inline V<mi> poly_multi_pt_sum(const V<mi> &a,int m,int g){ // b[i]=sum(a[j]^i) 
     return c;
 }
 
-inline pair<V<mi>,V<mi>> poly_recur(V<mi> a,V<mi> c,int g){ // build a(x)/b(x) from sum(a^i*c^(k-i))=0 for i<=k verified by lg4723
+inline pair<V<mi>,V<mi>> poly_recur(V<mi> a,V<mi> c,int g){ // build a(x)/b(x) from ¡Æ(a^i*c^(k-i))=0 for i<=k verified by lg4723
     int k=a.size();
     assert(k),assert(k+1==c.size());
     assert(c[0].val);
@@ -498,6 +498,66 @@ inline mi poly_coef(ll m,V<mi> a,V<mi> b,int g){ // [x^m] a(x)/b(x) verified by 
         b.resize(i>>1);
     }
     return a[0]/b[0];
+}
+
+inline V<mi> poly_shift(V<mi> a,mi b,int g){ // c[k]=¡Æ(C(k,i)*a[i]*b^j) for i+j=k
+    int n=a.size();
+    if(!n)return {};
+    V<mi>_b(n);
+    For(i,n)_b[i]=i?_b[i-1]*b:1;
+    comb_table ct(n);
+    For(i,n)a[i]*=ct.ifac[i],_b[i]*=ct.ifac[i];
+    a=poly_conv_add(a,_b,g);
+    For(i,n)a[i]*=ct.fac[i];
+    return a;
+}
+
+inline V<mi> poly_fall(V<mi> a){
+    int n=a.size();
+    if(!n)return {};
+    V<mi>S;
+    S.reserve(n-1);
+    FOR(i,1,n){
+        S.pb(1);
+        Rep(j,i)a[j]+=(S[j]=(j?S[j-1]:0)+j*S[j])*a[i];
+    }
+    return a;
+}
+
+inline V<mi> poly_up(V<mi> a){
+    int n=a.size();
+    if(!n)return {};
+    V<mi>s;
+    s.reserve(n-1);
+    FOR(i,1,n){
+        s.pb(1);
+        Rep(j,i)a[j]+=(s[j]=(j?s[j-1]:0)-(i-1)*s[j])*a[i];
+    }
+    return a;
+}
+
+inline V<mi> poly_rise(V<mi> a){
+    int n=a.size();
+    if(!n)return {};
+    V<mi>S;
+    S.reserve(n-1);
+    FOR(i,1,n){
+        S.pb(1);
+        Rep(j,i)a[j]+=(S[j]=(j?S[j-1]:0)-j*S[j])*a[i];
+    }
+    return a;
+}
+
+inline V<mi> poly_down(V<mi> a){
+    int n=a.size();
+    if(!n)return {};
+    V<mi>s;
+    s.reserve(n-1);
+    FOR(i,1,n){
+        s.pb(1);
+        Rep(j,i)a[j]+=(s[j]=(j?s[j-1]:0)+(i-1)*s[j])*a[i];
+    }
+    return a;
 }
 
 inline V<mi> bernoulli(int n,int g){ // a[i]=Bernoulli[i]/i! for i<n
@@ -529,12 +589,7 @@ inline mi poly_intv_sum(V<mi> a,ll l,ll r,int g){ // ¡Æ(a[i]*x^i) for l<=x<=r
 inline mi poly_intv_sum(V<mi> a,ll l,ll r){ // ¡Æ(a[i]*x^i) for l<=x<=r
     int n=a.size();
     if(!n||l>r)return 0;
-    V<mi>S{1};
-    S.reserve(n-1);
-    FOR(i,1,n){
-        Rep(j,i)a[j]+=(S[j]=(j?S[j-1]:0)+j*S[j])*a[i];
-        S.pb(1);
-    }
+    a=poly_fall(a);
     l=(l-1)%mod,r%=mod;
     if(l<0)l+=mod;
     if(r<0)r+=mod;

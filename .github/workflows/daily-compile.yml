@@ -28,7 +28,7 @@ jobs:
             "矩阵.hpp:数论.hpp"
             "数论.hpp:图论.hpp"
             "并查集.hpp:图论.hpp"
-            "modint.hpp:poly.hpp"
+            "数论.hpp:poly.hpp"
             "poly.hpp:字符串.hpp"
             "离散化.hpp:字符串.hpp"
             "RMQ.hpp:字符串.hpp"
