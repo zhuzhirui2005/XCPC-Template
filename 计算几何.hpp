@@ -101,10 +101,21 @@ inline void angle_sort(V<vec> &v){
     });
 }
 
+inline pll picks(const V<vec2d> &p){ // p should be ccw
+    int n=p.size();
+    ll A=0,O=0;
+    For(i,n){
+        int j=i+1<n?i+1:0;
+        A+=p[i].cross(p[j]);
+        O+=gcd(p[i].x-p[j].x,p[i].y-p[j].y);
+    }
+    return {A-O+2>>1,O}; // [in, on]
+}
+
 template<class vec>
 struct convex{
     V<vec>p;
-    inline int nxt(int k){return k+1==p.size()?0:k+1;}
+    inline int nxt(int k){return k+1<p.size()?k+1:0;}
     inline int pre(int k){return k?k-1:p.size()-1;} // p should not be empty
     inline void add(const vec &k){p.pb(k);}
     inline void init(bool coln=false){

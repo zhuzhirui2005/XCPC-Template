@@ -15,6 +15,7 @@ typedef unsigned long long ull;
 typedef pair<int,int> pii;
 typedef pair<int,ll> pil;
 typedef pair<ll,int> pli;
+typedef pair<ll,ll> pll;
 #define fi first
 #define se second
 const int dir[4][2]={{-1,0},{0,1},{1,0},{0,-1}},inf=0x3f3f3f3f,mod=1e9+7;
