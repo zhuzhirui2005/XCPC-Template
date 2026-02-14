@@ -230,7 +230,7 @@ struct maxmatch{
         to[x].pb(y);
     }
     inline maxmatch(int n=0,int m=0):n(n),m(m),mch(n+m,-1),to(n){}
-    inline maxmatch(const V<V<int>> &to):n(to.size()),m(0),to(to){
+    inline maxmatch(const V<V<int>> &to):n(to.size()),m(-1),to(to){
         For(i,n)for(int j:to[i])assert(j>=0),ckmax(m,j);
         ++m;
         mch.assign(n+m,-1);
@@ -273,5 +273,39 @@ struct maxmatch{
             For(i,n)if(!~mch[i]&&dfs(dfs,i))++cnt;
         }
         return cnt;
+    }
+    inline V<bool> bfs(){ // from left
+        queue<int>q;
+        V<bool>vis(n+m);
+        For(i,n)if(!~mch[i])q.push(i),vis[i]=true;
+        while(q.size()){
+            int p=q.front();q.pop();
+            if(p<n){
+                for(int i:to[p])if(n+i!=mch[p]&&!vis[n+i])q.push(n+i),vis[n+i]=true;
+            }
+            else if(~mch[p]&&!vis[mch[p]])q.push(mch[p]),vis[mch[p]]=true;
+        }
+        return vis;
+    }
+    inline V<int> cover(){
+        V<int>ret;
+        V<bool>vis=bfs();
+        For(i,n)if(!vis[i])ret.pb(i);
+        For(i,m)if(vis[n+i])ret.pb(n+i);
+        return ret;
+    }
+    inline V<int> indpset(){
+        V<int>ret;
+        V<bool>vis=bfs();
+        For(i,n)if(vis[i])ret.pb(i);
+        For(i,m)if(!vis[n+i])ret.pb(n+i);
+        return ret;
+    }
+    inline V<int> antichain(){
+        assert(n==m);
+        V<int>ret;
+        V<bool>vis=bfs();
+        For(i,n)if(vis[i]&&!vis[n+i])ret.pb(i);
+        return ret;
     }
 };
