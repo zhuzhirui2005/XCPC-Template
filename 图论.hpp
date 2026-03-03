@@ -501,3 +501,64 @@ inline pii centroid(int n,const V<array<int,3>> &e){ // return [vertex if w = 0 
     }
     return ret;
 }
+
+inline V<int> euler_path(int n,const V<pii> &e,bool dir,bool mn=false){
+    for(const auto &[i,j]:e)assert(0<=i),assert(i<n),assert(0<=j),assert(j<n);
+    int m=e.size();
+    if(!m)return {}; // 注意欧拉路径只要求经过所有边，不一定会经过所有点，所以 {} 合法而 {-1} 才是无解
+    V<int>ret,s;
+    ret.reserve(m+1);
+    if(dir){
+        V<int>deg(n),t;
+        for(const auto &[i,j]:e)++deg[i],--deg[j];
+        For(i,n)if(deg[i]){
+            if(deg[i]==1){
+                if(s.size())return {-1};
+                s.pb(i);
+            }
+            else if(!~deg[i]){
+                if(t.size())return {-1};
+                t.pb(i);
+            }
+            else return {-1};
+        }
+        if(s.size()!=t.size())return {-1};
+        V<V<int>>to(n);
+        for(const auto &[i,j]:e)to[i].pb(j);
+        if(mn)For(i,n)sort(ALL(to[i]),greater());
+        auto dfs=[&](auto &&self,int p)->void{
+            while(to[p].size()){
+                int i=to[p].back();
+                to[p].qb();
+                self(self,i);
+            }
+            ret.pb(p);
+        };
+        dfs(dfs,s.size()?s[0]:mn?ranges::min(e|views::transform([](const pii &k){return min(k.fi,k.se);})):e[0].fi);
+    }
+    else{
+        V<int>deg(n);
+        for(const auto &[i,j]:e)++deg[i],++deg[j];
+        For(i,n)if(deg[i]&1){
+            if(s.size()==2)return {-1};
+            s.pb(i);
+        }
+        if(s.size()==1)return {-1};
+        V<V<pii>>to(n);
+        For(i,m)to[e[i].fi].eb(e[i].se,i),to[e[i].se].eb(e[i].fi,i);
+        if(mn)For(i,n)sort(ALL(to[i]),[&](const pii &x,const pii &y){return x.fi>y.fi;});
+        V<bool>vis(m);
+        auto dfs=[&](auto &&self,int p)->void{
+            while(to[p].size()){
+                auto [i,j]=to[p].back();
+                to[p].qb();
+                if(!vis[j])vis[j]=true,self(self,i);
+            }
+            ret.pb(p);
+        };
+        dfs(dfs,s.size()?s[0]:mn?ranges::min(e|views::transform([](const pii &k){return min(k.fi,k.se);})):e[0].fi);
+    }
+    if(ret.size()!=m+1)return {-1};
+    reverse(ALL(ret));
+    return ret;
+}
