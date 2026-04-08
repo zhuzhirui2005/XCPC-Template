@@ -7,7 +7,7 @@ struct maxflow{
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
         hd[x].pb(e.size()),e.eb(y,z),hd[y].pb(e.size()),e.eb(x,0);
     }
-    inline maxflow(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
+    inline maxflow(int n=0,int S=-1,int T=-1):hd(n),n(n),S(S),T(T){}
     template<class U>inline maxflow(const V<V<pair<int,U>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const auto &[j,k]:to[i])add_edge(i,j,k);}
     inline ll dinic(int s=-1,int t=-1){
         if(!~s)s=S;
@@ -120,7 +120,7 @@ struct mincost{
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(z>=0);
         hd[x].pb(e.size()),e.pb({y,z,w}),hd[y].pb(e.size()),e.pb({x,0,-w});
     }
-    inline mincost(int n=0,int S=-1,int T=-1):n(n),S(S),T(T),hd(n){}
+    inline mincost(int n=0,int S=-1,int T=-1):hd(n),n(n),S(S),T(T){}
     inline mincost(const V<V<array<int,3>>> &to,int S=-1,int T=-1):n(to.size()),S(S),T(T),hd(to.size()){For(i,n)for(const array<int,3> &j:to[i])add_edge(i,j[0],j[1],j[2]);}
     typedef pair<ll,ll> pll;
     inline pll primal_dual(){
@@ -229,7 +229,7 @@ struct maxmatch{
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<m);
         to[x].pb(y);
     }
-    inline maxmatch(int n=0,int m=0):n(n),m(m),mch(n+m,-1),to(n){}
+    inline maxmatch(int n=0,int m=0):mch(n+m,-1),m(m),n(n),to(n){}
     inline maxmatch(const V<V<int>> &to):n(to.size()),m(-1),to(to){
         For(i,n)for(int j:to[i])assert(j>=0),ckmax(m,j);
         ++m;

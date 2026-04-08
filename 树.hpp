@@ -25,16 +25,15 @@ inline V<pii> cart_son(const V<T> &v,function<bool(T,T)>cmp=[](T x,T y){return x
 
 struct lca_table{
     int n;
+    V<int>dep,fa,siz,son,top;
     V<V<int>>to;
-    inline lca_table(int n=0):n(n),to(n){}
+    inline lca_table(int n=0):n(n),dep(n),fa(n),siz(n),son(n,-1),top(n,-1),to(n){}
     inline void add_edge(int x,int y){
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
         to[x].pb(y),to[y].pb(x);
     }
-    inline lca_table(const V<V<int>>&to_){n=(to=to_).size();init();}
-    V<int>dep,fa,siz,son,top;
+    inline lca_table(const V<V<int>>&to,int rt=0):n(to.size()),dep(n),fa(n),siz(n),son(n,-1),top(n,-1),to(to){init(rt);}
     inline void init(int rt=0){
-        V<int>(n).swap(dep),V<int>(n).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
         function<void(int,int)>dfs1=[&](int p,int f){
             if(~f)dep[p]=dep[f]+1;
             fa[p]=f,siz[p]=1;
@@ -45,7 +44,6 @@ struct lca_table{
                     if(!~son[p]||siz[i]>siz[son[p]])son[p]=i;
                 }
         };
-        V<int>(n,-1).swap(top);
         dfs1(rt,-1);
         function<void(int,int)>dfs2=[&](int p,int k){
             top[p]=k;
@@ -68,18 +66,51 @@ struct lca_table{
     }
 };
 
-struct tree_chain{
+template<template<class,class>class T=RMQ>
+struct lca_table_o1{
     int n;
+    V<int>dfn;
+    T<int,function<bool(int,int)>>rmq;
     V<V<int>>to;
-    inline tree_chain(int n=0):n(n),to(n){}
+    inline lca_table_o1(int n=0):n(n),dfn(n),to(n){}
     inline void add_edge(int x,int y){
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
         to[x].pb(y),to[y].pb(x);
     }
-    inline tree_chain(const V<V<int>>&to_){n=(to=to_).size();init();}
-    V<int>dep,fa,rev,seg,siz,son,top;
+    inline lca_table_o1(const V<V<int>> &to,int rt=0):n(to.size()),dfn(n),to(to){init(rt);}
     inline void init(int rt=0){
-        V<int>(n).swap(dep),V<int>(n).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
+        V<int>a;
+        a.reserve(n-1);
+        V<int>(n).swap(dfn);
+        int cnt=0;
+        auto dfs=[&](auto &&self,int p,int fa)->void{
+            if(p!=rt)a.pb(fa);
+            dfn[p]=cnt++;
+            for(int i:to[p])if(i!=fa)self(self,i,p);
+        };
+        dfs(dfs,rt,-1);
+        rmq=decltype(rmq)(a,[&](int x,int y){return dfn[x]<dfn[y];});
+    }
+    inline int lca(int x,int y)const{
+        assert(0<=x),assert(x<n),assert(0<=y),assert(y<n);
+        if(x==y)return x;
+        x=dfn[x],y=dfn[y];
+        if(x>y)swap(x,y);
+        return rmq.query(x,y-1);
+    }
+};
+
+struct tree_chain{
+    int n;
+    V<int>dep,dfn,fa,rev,siz,son,top;
+    V<V<int>>to;
+    inline tree_chain(int n=0):n(n),dep(n),dfn(n),fa(n),rev(n),siz(n),son(n,-1),top(n,-1),to(n){}
+    inline void add_edge(int x,int y){
+        assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
+        to[x].pb(y),to[y].pb(x);
+    }
+    inline tree_chain(const V<V<int>>&to,int rt=0):n(to.size()),dep(n),dfn(n),fa(n),rev(n),siz(n),son(n,-1),top(n,-1),to(to){init(rt);}
+    inline void init(int rt=0){
         function<void(int,int)>dfs1=[&](int p,int f){
             if(~f)dep[p]=dep[f]+1;
             fa[p]=f,siz[p]=1;
@@ -90,11 +121,10 @@ struct tree_chain{
                     if(!~son[p]||siz[i]>siz[son[p]])son[p]=i;
                 }
         };
-        int cnt=0;
-        V<int>(n).swap(rev),V<int>(n).swap(seg),V<int>(n,-1).swap(top);
         dfs1(rt,-1);
+        int cnt=0;
         function<void(int,int)>dfs2=[&](int p,int k){
-            seg[p]=cnt,rev[cnt++]=p,top[p]=k;
+            dfn[p]=cnt,rev[cnt++]=p,top[p]=k;
             if(~son[p]){
                 dfs2(son[p],k);
                 for(int i:to[p])
@@ -118,7 +148,7 @@ struct tree_chain{
             k-=dep[p]-dep[top[p]]+1;
             p=fa[top[p]];
         }
-        return rev[seg[p]-k];
+        return rev[dfn[p]-k];
     }
     inline V<pii> path(int x,int y,bool dir=0,bool lca=1){
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n);
@@ -127,19 +157,19 @@ struct tree_chain{
         while(top[x]!=top[y]){
             if(dep[top[x]]<dep[top[y]])rv^=1,swap(x,y);
             if(dir){
-                if(rv)ter.eb(seg[top[x]],seg[x]);
-                else ret.eb(seg[x],seg[top[x]]);
+                if(rv)ter.eb(dfn[top[x]],dfn[x]);
+                else ret.eb(dfn[x],dfn[top[x]]);
             }
-            else (rv?ter:ret).eb(seg[top[x]],seg[x]);
+            else (rv?ter:ret).eb(dfn[top[x]],dfn[x]);
             x=fa[top[x]];
         }
         if(lca||x!=y){
             if(dep[x]>dep[y])rv^=1,swap(x,y);
             if(dir){
-                if(rv)ter.eb(seg[y],seg[x]+!lca);
-                else ret.eb(seg[x]+!lca,seg[y]);
+                if(rv)ter.eb(dfn[y],dfn[x]+!lca);
+                else ret.eb(dfn[x]+!lca,dfn[y]);
             }
-            else (rv?ret:ter).eb(seg[x]+!lca,seg[y]);
+            else (rv?ret:ter).eb(dfn[x]+!lca,dfn[y]);
         }
         reverse(ALL(ter));
         ret.insert(ret.end(),ALL(ter));
@@ -147,17 +177,18 @@ struct tree_chain{
     }
 };
 
-inline void virt_tree(V<int> &p,const tree_chain &tc,V<V<int>> &to){
-    sort(ALL(p),[&](int x,int y){return tc.seg[x]<tc.seg[y];});
+template<class T>
+inline void virt_tree(V<int> &p,const T &t,V<V<int>> &to){
+    sort(ALL(p),[&](int x,int y){return t.dfn[x]<t.dfn[y];});
     p.erase(unique(ALL(p)),p.end());
     auto add_edge=[&](int x,int y){to[x].pb(y),to[y].pb(x);};
     V<int>st;
     for(int i:p){
         if(st.size()){
-            int anc=tc.lca(i,st.back());
+            int anc=t.lca(i,st.back());
             if(anc!=st.back()){
-                while(st.size()>1&&tc.seg[anc]<tc.seg[st[st.size()-2]])add_edge(st[st.size()-2],st.back()),st.qb();
-                if(st.size()==1||tc.seg[anc]>tc.seg[st[st.size()-2]])V<int>().swap(to[anc]),add_edge(anc,st.back()),st.back()=anc;
+                while(st.size()>1&&t.dfn[anc]<t.dfn[st[st.size()-2]])add_edge(st[st.size()-2],st.back()),st.qb();
+                if(st.size()==1||t.dfn[anc]>t.dfn[st[st.size()-2]])V<int>().swap(to[anc]),add_edge(anc,st.back()),st.back()=anc;
                 else add_edge(anc,st.back()),st.qb();
             }
         }
@@ -168,16 +199,15 @@ inline void virt_tree(V<int> &p,const tree_chain &tc,V<V<int>> &to){
 
 struct lca_table_forest{
     int n;
+    V<int>dep,fa,id,siz,son,top;
     V<V<int>>to;
-    inline lca_table_forest(int n=0):n(n),to(n){}
+    inline lca_table_forest(int n=0):n(n),dep(n),fa(n,-1),id(n,-1),siz(n),son(n,-1),top(n,-1),to(n){}
     inline void add_edge(int x,int y){
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
         to[x].pb(y),to[y].pb(x);
     }
-    inline lca_table_forest(const V<V<int>>&to_){n=(to=to_).size();init();}
-    V<int>dep,fa,id,siz,son,top;
+    inline lca_table_forest(const V<V<int>>&to):n(to.size()),dep(n),fa(n,-1),id(n,-1),siz(n),son(n,-1),top(n,-1),to(to){init();}
     inline void init(){ // 暂时不允许指定各子树的根
-        V<int>(n).swap(dep),V<int>(n,-1).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
         function<void(int,int)>dfs1=[&](int p,int f){
             if(~f)dep[p]=dep[f]+1;
             fa[p]=f,siz[p]=1;
@@ -189,7 +219,6 @@ struct lca_table_forest{
                 }
         };
         For(i,n)if(!~fa[i])dfs1(i,-1);
-        V<int>(n,-1).swap(id),V<int>(n,-1).swap(top);
         function<void(int,int)>dfs2=[&](int p,int k){
             id[p]=id[k],top[p]=k;
             if(~son[p]){
@@ -213,16 +242,15 @@ struct lca_table_forest{
 
 struct tree_chain_forest{
     int n;
+    V<int>dep,dfn,fa,id,rev,siz,son,top;
     V<V<int>>to;
-    inline tree_chain_forest(int n=0):n(n),to(n){}
+    inline tree_chain_forest(int n=0):n(n),dep(n),dfn(n),fa(n,-1),id(n,-1),rev(n),siz(n),son(n,-1),top(n,-1),to(n){}
     inline void add_edge(int x,int y){
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(x!=y);
         to[x].pb(y),to[y].pb(x);
     }
-    inline tree_chain_forest(const V<V<int>>&to_){n=(to=to_).size();init();}
-    V<int>dep,fa,id,rev,seg,siz,son,top;
+    inline tree_chain_forest(const V<V<int>>&to):n(to.size()),dep(n),dfn(n),fa(n,-1),id(n,-1),rev(n),siz(n),son(n,-1),top(n,-1),to(to){init();}
     inline void init(){ // 暂时不允许指定各子树的根
-        V<int>(n).swap(dep),V<int>(n).swap(fa),V<int>(n).swap(siz),V<int>(n,-1).swap(son);
         function<void(int,int)>dfs1=[&](int p,int f){
             if(~f)dep[p]=dep[f]+1;
             fa[p]=f,siz[p]=1;
@@ -235,10 +263,9 @@ struct tree_chain_forest{
         };
         For(i,n)if(!~fa[i])dfs1(i,-1);
         int cnt=0;
-        V<int>(n,-1).swap(id),V<int>(n).swap(rev),V<int>(n).swap(seg),V<int>(n,-1).swap(top);
         function<void(int,int)>dfs2=[&](int p,int k){
-            seg[p]=cnt,rev[cnt++]=p;
-            top[p]=k;
+            dfn[p]=cnt,rev[cnt++]=p;
+            id[p]=id[k],top[p]=k;
             if(~son[p]){
                 dfs2(son[p],k);
                 for(int i:to[p])
@@ -248,7 +275,7 @@ struct tree_chain_forest{
         };
         For(i,n)if(!~top[i])id[i]=i,dfs2(i,i);
     }
-    inline int lca(int x,int y){
+    inline int lca(int x,int y)const{
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(id[x]==id[y]);
         while(top[x]!=top[y]){
             if(dep[top[x]]<dep[top[y]])swap(x,y);
@@ -262,7 +289,7 @@ struct tree_chain_forest{
             k-=dep[p]-dep[top[p]]+1;
             p=fa[top[p]];
         }
-        return rev[seg[p]-k];
+        return rev[dfn[p]-k];
     }
     inline V<pii> path(int x,int y,bool dir=0,bool lca=1){
         assert(0<=x),assert(x<n),assert(0<=y),assert(y<n),assert(id[x]==id[y]);
@@ -271,19 +298,19 @@ struct tree_chain_forest{
         while(top[x]!=top[y]){
             if(dep[top[x]]<dep[top[y]])rv^=1,swap(x,y);
             if(dir){
-                if(rv)ter.eb(seg[top[x]],seg[x]);
-                else ret.eb(seg[x],seg[top[x]]);
+                if(rv)ter.eb(dfn[top[x]],dfn[x]);
+                else ret.eb(dfn[x],dfn[top[x]]);
             }
-            else (rv?ter:ret).eb(seg[top[x]],seg[x]);
+            else (rv?ter:ret).eb(dfn[top[x]],dfn[x]);
             x=fa[top[x]];
         }
         if(lca||x!=y){
             if(dep[x]>dep[y])rv^=1,swap(x,y);
             if(dir){
-                if(rv)ter.eb(seg[y],seg[x]+!lca);
-                else ret.eb(seg[x]+!lca,seg[y]);
+                if(rv)ter.eb(dfn[y],dfn[x]+!lca);
+                else ret.eb(dfn[x]+!lca,dfn[y]);
             }
-            else (rv?ret:ter).eb(seg[x]+!lca,seg[y]);
+            else (rv?ret:ter).eb(dfn[x]+!lca,dfn[y]);
         }
         reverse(ALL(ter));
         ret.insert(ret.end(),ALL(ter));

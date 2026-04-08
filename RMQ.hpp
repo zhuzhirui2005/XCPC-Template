@@ -15,7 +15,7 @@ struct ST{
             }
         }
     }
-    inline T query(int l,int r){
+    inline T query(int l,int r)const{
         assert(0<=l),assert(l<=r),assert(r<n);
         int k=__lg(r-l+1);
         return min(st[k][l],st[k][r-(1<<k)+1],cmp);
@@ -57,7 +57,7 @@ struct RMQ{
             }
         }
     }
-    inline T query(int l,int r){
+    inline T query(int l,int r)const{
         assert(0<=l),assert(l<=r),assert(r<n);
         int L=l>>6,R=r>>6;
         if(L<R){
