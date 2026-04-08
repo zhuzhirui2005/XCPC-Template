@@ -208,7 +208,7 @@ inline V<int> minpal(const T &s){
     return f;
 }
 
-template<template<class> class T=RMQ>
+template<template<class>class T=RMQ>
 inline V<array<int,3>> runs(const string &s,int m=128){
     int n=s.size();
     string r=s,t=s;

@@ -45,3 +45,14 @@ struct range_dsu{
     inline bool same(int x,int y){return find(x)==find(y);}
     inline int size(int k){return -fa[0][find(k)];}
 };
+
+struct pal_dsu{
+    range_dsu d;
+    int n;
+    inline pal_dsu(int n=0):d(n<<1),n(n){For(i,n)d.merge(i,i,(n<<1)-1-i,(n<<1)-1-i);}
+    inline void merge(int x1,int x2,int y1,int y2){d.merge(x1,x2,(n<<1)-1-y2,(n<<1)-1-y1);}
+    inline void init(){d.init();}
+    int find(int k){return d.find(k);}
+    inline bool same(int x,int y){return d.same(x,y);}
+    inline int size(int k){return d.size(k)>>1;}
+};
