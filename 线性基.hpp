@@ -3,8 +3,8 @@ struct LB{
     static_assert(n>0);
     static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
     int cnt,failed;
-    V<T>d;
-    inline LB():cnt(0),failed(0),d(n){}
+    array<T,n>d;
+    inline LB():cnt(0),failed(0),d{}{}
     inline bool insert(T k){
         Rep(i,n)if(k>>i&1){
             if(!d[i]){
@@ -66,12 +66,11 @@ struct LB{
 
 template<class T,int n>
 struct LB_ts{ // timestamp
-    V<T>d;
-    V<int>t;
-    inline LB_ts():d(n),t(n){
-        static_assert(n>0);
-        static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
-    }
+    static_assert(n>0);
+    static_assert(n<=(is_same_v<T,int>?31:is_same_v<T,unsigned>?32:is_same_v<T,ll>?63:is_same_v<T,ull>?64:-1));
+    array<T,n>d;
+    array<int,n>t;
+    inline LB_ts():d{},t{}{}
     inline bool insert(T k,int tm){
         Rep(i,n)if(k>>i&1){
             if(!d[i]){
