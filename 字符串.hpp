@@ -166,21 +166,24 @@ inline V<int> ntt_match(const string &s,const string &t,int g,char wc='*'){
 struct eertree{
     V<int>d,fail,len,link;
     int lst;
-    V<array<int,26>>nxt;
+    V<array<int,26>>nxt,pre;
     string s;
-    inline eertree():d(2),fail(2),len{-1,0},link(2),lst(1),nxt{{},{}}{}
+    inline eertree():d(2),fail(2),len{-1,0},link(2),lst(1),nxt(2),pre(2){}
     inline bool extend(char c){
         int pos=s.size();
         s+=c,c-='a';
-        while(pos<len[lst]+1||s[pos-1-len[lst]]!=s[pos])lst=fail[lst];
+        if(pos<=len[lst]||s[pos-1-len[lst]]!=s[pos])lst=pre[lst][c];
         if(!nxt[lst][c]){
             len.pb(len[lst]+2),nxt[lst][c]=nxt.size();
             if(len.back()>1){
-                for(lst=fail[lst];pos<len[lst]+1||s[pos-1-len[lst]]!=s[pos];lst=fail[lst]);
+                lst=fail[lst];
+                if(pos<=len[lst]||s[pos-1-len[lst]]!=s[pos])lst=pre[lst][c];
                 fail.pb(nxt[lst][c]);
             }
             else fail.pb(1);
-            d.pb(len.back()-len[fail.back()]),link.pb(d.back()>d[fail.back()]?fail.back():link[fail.back()]),lst=nxt.size(),nxt.pb({});
+            int f=fail.back();
+            d.pb(len.back()-len[f]),link.pb(d.back()>d[f]?f:link[f]),pre.pb(pre[f]),pre.back()[s[pos-len[f]]-'a']=f;
+            lst=nxt.size(),nxt.pb({});
             return true;
         }
         else{
