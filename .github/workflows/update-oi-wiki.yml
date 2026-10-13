@@ -1,58 +1,161 @@
 name: Update OI-Wiki PDF
 
 on:
-  # 每天 UTC 1 点触发一次，也可使用 workflow_dispatch 手动触发
+  # 每天 UTC 1 点更新；修改 workflow 后立即运行，也可手动触发。
   schedule:
     - cron: '0 1 * * *'
   workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/update-oi-wiki.yml']
+  pull_request:
+    paths: ['.github/workflows/update-oi-wiki.yml']
+
+# 同一分支串行运行，避免两个任务同时替换 Release 附件。
+concurrency:
+  group: oi-wiki-pdf-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   update_pdf:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
 
     steps:
-      # 1. 签出仓库并保留凭据以便后续 git push
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # PDF 不再进入 Git 历史，无需 checkout 或 git push。
+      - name: Get latest release asset
+        id: upstream
+        uses: actions/github-script@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: true
-
-      # 2. 获取最新 Release 中名为 OI-wiki.pdf 的下载链接
-      - name: Get latest release asset URL
-        id: get_release
-        uses: actions/github-script@v6
-        with:
+          retries: 3
           script: |
-            const rel = await github.rest.repos.getLatestRelease({
-              owner: 'OI-wiki',
-              repo: 'OI-Wiki-export'
+            const { data: release } = await github.rest.repos.getLatestRelease({
+              owner: 'OI-wiki', repo: 'OI-Wiki-export'
             });
-            const asset = rel.data.assets.find(a => a.name === 'OI-wiki.pdf');
-            if (!asset) throw new Error('Cannot find OI-wiki.pdf in latest release');
+            const asset = release.assets.find(a => a.name === 'OI-wiki.pdf');
+            if (!asset || asset.state !== 'uploaded' || asset.size <= 0) {
+              throw new Error('Cannot find a complete OI-wiki.pdf in the latest release');
+            }
             core.setOutput('url', asset.browser_download_url);
+            core.setOutput('size', String(asset.size));
+            core.setOutput('digest', asset.digest || '');
+            core.setOutput('release_url', release.html_url);
 
-      # 3. 下载最新的 OI-wiki.pdf
       - name: Download OI-wiki.pdf
-        run: |
-          curl -L "${{ steps.get_release.outputs.url }}" -o OI-wiki.pdf
-
-      # 4. 如果有变化，提交并推送到远程
-      - name: Commit & Push if changed
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASSET_URL: ${{ steps.upstream.outputs.url }}
         run: |
-          # 配置提交作者
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # 暂存新下载的文件
-          git add OI-wiki.pdf
+          curl --fail --location --show-error --silent \
+            --retry 3 --connect-timeout 30 --max-time 300 \
+            "$ASSET_URL" -o "$RUNNER_TEMP/OI-wiki.pdf"
 
-          # 检测暂存区与 HEAD 是否有差异（包括新文件）
-          if git diff-index --quiet HEAD --; then
-            echo "No changes in OI-wiki.pdf, skipping commit."
-          else
-            git commit -m "chore: update OI-wiki.pdf to latest release"
-            git push
-          fi
+      - name: Verify downloaded PDF
+        id: verify
+        uses: actions/github-script@v8
+        env:
+          EXPECTED_SIZE: ${{ steps.upstream.outputs.size }}
+          EXPECTED_DIGEST: ${{ steps.upstream.outputs.digest }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const { createHash } = require('node:crypto');
+            const data = fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'OI-wiki.pdf'));
+            if (data.length !== Number(process.env.EXPECTED_SIZE)) {
+              throw new Error('Downloaded PDF size does not match the release asset');
+            }
+            if (data.subarray(0, 5).toString('ascii') !== '%PDF-') {
+              throw new Error('Downloaded file is not a PDF');
+            }
+            const digest = `sha256:${createHash('sha256').update(data).digest('hex')}`;
+            if (process.env.EXPECTED_DIGEST && process.env.EXPECTED_DIGEST !== digest) {
+              throw new Error('Downloaded PDF SHA-256 does not match the release asset');
+            }
+            core.setOutput('digest', digest);
+            core.info(`Verified OI-wiki.pdf: ${data.length} bytes, ${digest}`);
+
+      # PR 和非默认分支的手动运行只校验下载，不发布、不修改仓库。
+      - name: Publish PDF as a release asset
+        if: >-
+          github.event_name != 'pull_request' &&
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/github-script@v8
+        env:
+          PDF_DIGEST: ${{ steps.verify.outputs.digest }}
+          SOURCE_RELEASE_URL: ${{ steps.upstream.outputs.release_url }}
+        with:
+          retries: 3
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const repo = context.repo;
+            const tag = 'oi-wiki-latest';
+            const name = 'OI-wiki.pdf';
+            const digest = process.env.PDF_DIGEST;
+            const data = fs.readFileSync(path.join(process.env.RUNNER_TEMP, name));
+            const body = [
+              'Automatically mirrored from [OI-Wiki-export](' + process.env.SOURCE_RELEASE_URL + ').',
+              '',
+              'Download `OI-wiki.pdf` below. The PDF is stored as a release asset, not a Git blob.',
+              '',
+              `SHA-256: \`${digest.slice(7)}\``
+            ].join('\n');
+
+            let release;
+            try {
+              ({ data: release } = await github.rest.repos.getReleaseByTag({ ...repo, tag }));
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              ({ data: release } = await github.rest.repos.createRelease({
+                ...repo, tag_name: tag, target_commitish: context.sha,
+                name: 'OI-Wiki PDF (latest)', body, draft: true, make_latest: 'false'
+              }));
+            }
+            const assets = await github.paginate(github.rest.repos.listReleaseAssets, {
+              ...repo, release_id: release.id, per_page: 100
+            });
+            const matches = asset => asset && asset.state === 'uploaded' &&
+              asset.size === data.length && (asset.digest ? asset.digest === digest : asset.label === digest);
+            const current = assets.find(asset => asset.name === name);
+
+            if (!matches(current)) {
+              // 先完整上传临时附件，再替换旧版；上传失败时保留旧版下载。
+              const pendingName = `OI-wiki-${digest.slice(7)}.pdf`;
+              let pending = assets.find(asset => asset.name === pendingName);
+              if (!matches(pending)) {
+                if (pending) {
+                  await github.rest.repos.deleteReleaseAsset({ ...repo, asset_id: pending.id });
+                }
+                ({ data: pending } = await github.rest.repos.uploadReleaseAsset({
+                  ...repo, release_id: release.id, name: pendingName, label: digest,
+                  headers: { 'content-type': 'application/pdf', 'content-length': data.length },
+                  data
+                }));
+                if (!matches(pending)) throw new Error('Uploaded PDF asset failed verification');
+              }
+              if (current) {
+                await github.rest.repos.deleteReleaseAsset({ ...repo, asset_id: current.id });
+              }
+              await github.rest.repos.updateReleaseAsset({
+                ...repo, asset_id: pending.id, name, label: digest
+              });
+            } else {
+              core.info('OI-wiki.pdf is already up to date; skipping upload.');
+            }
+            if (release.draft || release.body !== body) {
+              await github.rest.repos.updateRelease({
+                ...repo, release_id: release.id, body, draft: false, make_latest: 'false'
+              });
+            }
+            await core.summary
+              .addHeading('OI-Wiki PDF')
+              .addLink('Download latest PDF', `https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/${name}`)
+              .addEOL()
+              .addRaw(`SHA-256: ${digest.slice(7)}`)
+              .write();
