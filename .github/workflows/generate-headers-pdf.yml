@@ -40,10 +40,11 @@ jobs:
           sudo apt-get -o Acquire::Retries=3 update
           sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
             pandoc texlive-xetex texlive-latex-extra texlive-lang-chinese \
-            lmodern fonts-noto-cjk fonts-dejavu-core
+            texlive-fonts-recommended lmodern fonts-noto-cjk fonts-dejavu-core
           kpsewhich lmodern.sty
           kpsewhich xeCJK.sty
           kpsewhich fvextra.sty
+          kpsewhich pzdr.tfm
       - name: Build PDF without modifying headers
         run: python3 .github/scripts/headers.py build --output build/headers.pdf
       - name: Verify reproducible PDF on PRs
