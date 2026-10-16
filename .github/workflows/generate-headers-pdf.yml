@@ -1,93 +1,89 @@
 name: Generate C++ Headers PDF
 
 on:
-  schedule:
-    - cron: '0 2 * * *'
+  push:
+    branches: [master]
+    paths:
+      - '*.hpp'
+      - '.github/scripts/headers.py'
+      - '.github/scripts/publish_headers.cjs'
+      - '.github/workflows/generate-headers-pdf.yml'
+  pull_request:
+    paths:
+      - '*.hpp'
+      - '.github/scripts/headers.py'
+      - '.github/scripts/publish_headers.cjs'
+      - '.github/workflows/generate-headers-pdf.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: headers-pdf-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build_pdf:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: true
-
-      - name: Install Pandoc, LaTeX & fonts
+          persist-credentials: false
+      - name: Install PDF toolchain
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pandoc \
-            texlive-xetex \
-            texlive-latex-recommended \
-            texlive-fonts-recommended \
-            texlive-lang-chinese \
-            fonts-noto-cjk \
-            fonts-dejavu-core \
-            dos2unix
-
-      - name: Normalize & convert headers to UTF-8
-        shell: bash
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+            pandoc texlive-xetex texlive-latex-extra texlive-lang-chinese \
+            texlive-fonts-recommended lmodern fonts-noto-cjk fonts-dejavu-core
+          kpsewhich lmodern.sty
+          kpsewhich xeCJK.sty
+          kpsewhich fvextra.sty
+          kpsewhich pzdr.tfm
+      - name: Build PDF without modifying headers
+        run: python3 .github/scripts/headers.py build --output build/headers.pdf
+      - name: Verify reproducible PDF on PRs
+        if: github.event_name == 'pull_request'
         run: |
-          for f in *.hpp; do
-            dos2unix "$f" &>/dev/null
-            if ! iconv -f utf-8 -t utf-8 "$f" -o /dev/null 2>/dev/null; then
-              iconv -f gb18030 -t utf-8 "$f" -o "${f}.utf8" && mv "${f}.utf8" "$f"
-            fi
-          done
+          python3 .github/scripts/headers.py build --output "$RUNNER_TEMP/headers-rebuilt.pdf"
+          cmp build/headers.pdf "$RUNNER_TEMP/headers-rebuilt.pdf"
+      - name: Confirm source checkout is unchanged
+        run: git diff --exit-code
+      - name: Save PDF for review or publication
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: headers-pdf
+          path: build/headers.pdf
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
 
-      - name: Generate HEADERS.md
-        shell: bash
-        run: |
-          printf '%s\n' \
-            '---' \
-            'title: "C++ Header Files"' \
-            'toc: true' \
-            'toc-depth: 2' \
-            'header-includes:' \
-            '  - \usepackage{xeCJK}' \
-            '  - \setCJKmonofont[Scale=MatchLowercase]{Noto Sans Mono CJK SC}' \
-            '  - \usepackage{fvextra}' \
-            '  - \fvset{breaklines=true,breakanywhere=true,breakindent=0pt}' \
-            '---' \
-          > HEADERS.md
-
-          for file in *.hpp; do
-            printf '## %s\n' "$file"     >> HEADERS.md
-            printf '```cpp\n'            >> HEADERS.md
-            sed 's/\t/    /g' "$file"    >> HEADERS.md
-            printf '\n```\n\n'          >> HEADERS.md
-          done
-
-      - name: Ensure HEADERS.md is UTF-8
-        shell: bash
-        run: |
-          iconv -f utf-8 -t utf-8 HEADERS.md -o HEADERS.tmp && mv HEADERS.tmp HEADERS.md
-
-      - name: Convert to PDF via XeLaTeX
-        run: |
-          pandoc HEADERS.md \
-            --toc --toc-depth=2 \
-            --pdf-engine=xelatex \
-            -V mainfont="DejaVu Serif" \
-            -V monofont="DejaVu Sans Mono" \
-            -V CJKmainfont="Noto Serif CJK SC" \
-            -V geometry:margin=1in \
-            -o headers.pdf
-
-      - name: Commit & Push if changed
+  publish:
+    needs: build_pdf
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: headers-pdf
+          path: ${{ runner.temp }}/headers
+      - name: Commit only if source inputs are still current
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add headers.pdf
-          if git diff-index --quiet HEAD --; then
-            echo "No changes to headers.pdf, skipping commit."
-          else
-            git commit -m "chore: generate headers PDF"
-            git push
-          fi
+          PDF_PATH: ${{ runner.temp }}/headers/headers.pdf
+        with:
+          script: |
+            await require('./.github/scripts/publish_headers.cjs').publish({ github, context, core });
