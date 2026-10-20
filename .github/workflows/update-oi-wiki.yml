@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
       - name: Compare upstream and mirrored release metadata
         id: upstream
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           retries: 3
           script: |
@@ -56,7 +56,7 @@ jobs:
         if: >-
           steps.upstream.outputs.changed == 'true' ||
           github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           EXPECTED_SIZE: ${{ steps.upstream.outputs.size }}
           EXPECTED_DIGEST: ${{ steps.upstream.outputs.digest }}
@@ -99,7 +99,7 @@ jobs:
           name: oi-wiki-pdf
           path: ${{ runner.temp }}
       - name: Publish the verified release asset
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PDF_DIGEST: ${{ needs.check.outputs.digest }}
           SOURCE_RELEASE_URL: ${{ needs.check.outputs.source_url }}
